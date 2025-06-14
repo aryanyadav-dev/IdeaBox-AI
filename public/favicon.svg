@@ -1,0 +1,46 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bulbGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#EC4899" />
+    </linearGradient>
+    <linearGradient id="brainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#7C3AED" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Lightbulb body -->
+  <path d="M32 10C26 10 21 15 21 21C21 25 23 28.5 26 30.5C28 32 29 33.5 29 35V38H35V35C35 33.5 36 32 38 30.5C41 28.5 43 25 43 21C43 15 38 10 32 10Z" 
+        fill="url(#bulbGradient)" stroke="#F8FAFC" stroke-width="1.5" />
+  
+  <!-- Lightbulb base -->
+  <rect x="28" y="38" width="8" height="3" rx="1" fill="#F59E0B" stroke="#F8FAFC" stroke-width="1" />
+  <rect x="29" y="41" width="6" height="3" rx="1" fill="#F59E0B" stroke="#F8FAFC" stroke-width="1" />
+  
+  <!-- Brain circuits overlaying the bulb -->
+  <!-- Left side of brain -->
+  <path d="M18 26C14 22 16 14 24 12" stroke="url(#brainGradient)" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M24 46C14 44 13 34 18 26" stroke="url(#brainGradient)" stroke-width="2.5" stroke-linecap="round" />
+  
+  <!-- Right side of brain -->
+  <path d="M46 26C50 22 48 14 40 12" stroke="url(#brainGradient)" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M40 46C50 44 51 34 46 26" stroke="url(#brainGradient)" stroke-width="2.5" stroke-linecap="round" />
+  
+  <!-- Central connector -->
+  <path d="M24 12C28 10 36 10 40 12" stroke="url(#brainGradient)" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M24 46C28 48 36 48 40 46" stroke="url(#brainGradient)" stroke-width="2.5" stroke-linecap="round" />
+  
+  <!-- Neural nodes -->
+  <circle cx="24" cy="12" r="2.5" fill="#7C3AED" />
+  <circle cx="40" cy="12" r="2.5" fill="#7C3AED" />
+  <circle cx="18" cy="26" r="2.5" fill="#7C3AED" />
+  <circle cx="46" cy="26" r="2.5" fill="#7C3AED" />
+  <circle cx="24" cy="46" r="2.5" fill="#7C3AED" />
+  <circle cx="40" cy="46" r="2.5" fill="#7C3AED" />
+  
+  <!-- Light rays -->
+  <path d="M32 4V8" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M20 8L22.5 12" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M44 8L41.5 12" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" />
+</svg> 

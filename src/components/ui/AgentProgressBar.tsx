@@ -2,9 +2,10 @@ import React from 'react';
 import { RotateCw, CheckCircle, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { HoverScale } from './MotionComponents';
+import { AgentType } from '../../context/AgentContext';
 
 interface AgentProgressBarProps {
-  type: 'research' | 'writer' | 'validator' | 'builder' | 'pitch' | 'investor';
+  type: AgentType;
   status: 'idle' | 'running' | 'completed' | 'error';
   title: string;
   onRun: () => void;
@@ -31,6 +32,32 @@ const AgentProgressBar: React.FC<AgentProgressBarProps> = ({
         return 'bg-amber-500 text-white';
       case 'investor':
         return 'bg-green-600 text-white';
+      case 'runway':
+        return 'bg-red-500 text-white';
+      case 'growth':
+        return 'bg-teal-500 text-white';
+      case 'investorStrategy':
+        return 'bg-cyan-500 text-white';
+      case 'productTeamHealth':
+        return 'bg-lime-500 text-white';
+      case 'milestoneKPI':
+        return 'bg-fuchsia-500 text-white';
+      case 'featurePrioritization':
+        return 'bg-rose-500 text-white';
+      case 'instantPrototyping':
+        return 'bg-sky-500 text-white';
+      case 'techStackOptimization':
+        return 'bg-indigo-500 text-white';
+      case 'testSuiteGeneration':
+        return 'bg-violet-500 text-white';
+      case 'pairProgramming':
+        return 'bg-pink-500 text-white';
+      case 'mvpToScaleRoadmap':
+        return 'bg-stone-500 text-white';
+      case 'communityFeedback':
+        return 'bg-emerald-500 text-white';
+      case 'complianceRiskCheck':
+        return 'bg-slate-500 text-white';
       default:
         return 'bg-gray-600 text-white';
     }
@@ -46,6 +73,19 @@ const AgentProgressBar: React.FC<AgentProgressBarProps> = ({
                type === 'builder' ? 'bg-orange-500' :
                type === 'pitch' ? 'bg-amber-500' :
                type === 'investor' ? 'bg-green-600' :
+               type === 'runway' ? 'bg-red-500' :
+               type === 'growth' ? 'bg-teal-500' :
+               type === 'investorStrategy' ? 'bg-cyan-500' :
+               type === 'productTeamHealth' ? 'bg-lime-500' :
+               type === 'milestoneKPI' ? 'bg-fuchsia-500' :
+               type === 'featurePrioritization' ? 'bg-rose-500' :
+               type === 'instantPrototyping' ? 'bg-sky-500' :
+               type === 'techStackOptimization' ? 'bg-indigo-500' :
+               type === 'testSuiteGeneration' ? 'bg-violet-500' :
+               type === 'pairProgramming' ? 'bg-pink-500' :
+               type === 'mvpToScaleRoadmap' ? 'bg-stone-500' :
+               type === 'communityFeedback' ? 'bg-emerald-500' :
+               type === 'complianceRiskCheck' ? 'bg-slate-500' :
                'bg-gray-600';
       case 'running':
         return type === 'research' ? 'bg-gray-700' :
@@ -54,6 +94,19 @@ const AgentProgressBar: React.FC<AgentProgressBarProps> = ({
                type === 'builder' ? 'bg-orange-500' :
                type === 'pitch' ? 'bg-amber-500' :
                type === 'investor' ? 'bg-green-600' :
+               type === 'runway' ? 'bg-red-500' :
+               type === 'growth' ? 'bg-teal-500' :
+               type === 'investorStrategy' ? 'bg-cyan-500' :
+               type === 'productTeamHealth' ? 'bg-lime-500' :
+               type === 'milestoneKPI' ? 'bg-fuchsia-500' :
+               type === 'featurePrioritization' ? 'bg-rose-500' :
+               type === 'instantPrototyping' ? 'bg-sky-500' :
+               type === 'techStackOptimization' ? 'bg-indigo-500' :
+               type === 'testSuiteGeneration' ? 'bg-violet-500' :
+               type === 'pairProgramming' ? 'bg-pink-500' :
+               type === 'mvpToScaleRoadmap' ? 'bg-stone-500' :
+               type === 'communityFeedback' ? 'bg-emerald-500' :
+               type === 'complianceRiskCheck' ? 'bg-slate-500' :
                'bg-gray-600';
       case 'error':
         return 'bg-red-500';

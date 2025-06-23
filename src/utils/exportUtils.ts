@@ -44,6 +44,10 @@ export interface ExportData {
       timeline: string;
       deliverables: string[];
     }[];
+    userJourneyMap?: any;
+    interactivePrototype?: any;
+    technicalArchitecture?: any;
+    marketDifferentiators?: string[];
   };
   pitchDocument?: {
     executiveSummary: string;
@@ -60,7 +64,57 @@ export interface ExportData {
       year3: string;
     };
     fundingRequest: string;
+    elevatorPitch?: string;
+    keyMetrics?: any;
+    competitiveLandscape?: any;
+    marketSizing?: any;
+    investorFaq?: any;
+    pitchDeck?: any;
+    visualElements?: any;
   };
+  investorInsights?: {
+    vcMatches?: any[];
+    metrics?: any[];
+    marketSizing?: any;
+    fundingStrategy?: any;
+  };
+  runwayAnalysis?: {
+    projection?: any;
+    scenarios?: any[];
+    optimizations?: string[];
+  };
+  growthMapping?: any;
+  growthOpportunity?: {
+    marketSegments?: any[];
+    upsellCrossSell?: string[];
+    expansionStrategies?: string[];
+    benchmarking?: any[];
+  };
+  investorStrategy?: {
+    investorMatches?: any[];
+    fundraisingTiming?: string;
+    fundraisingStrategy?: string[];
+    commonQuestionsAnswers?: any[];
+  };
+  productTeamHealth?: {
+    productRoadmapReview?: string;
+    teamStructureReview?: string;
+    hiringRecommendations?: string[];
+    processImprovements?: string[];
+  };
+  milestoneKPI?: {
+    kpis?: any[];
+    milestones?: any[];
+    forecasting?: string;
+  };
+  featurePrioritization?: any;
+  instantPrototyping?: any;
+  techStackOptimization?: any;
+  testSuiteGeneration?: any;
+  pairProgramming?: any;
+  mvpToScaleRoadmap?: any;
+  communityFeedback?: any;
+  complianceRiskCheck?: any;
 }
 
 /**

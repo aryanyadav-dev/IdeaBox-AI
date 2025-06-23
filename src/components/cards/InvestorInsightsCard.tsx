@@ -4,33 +4,41 @@ import { Users, DollarSign, TrendingUp, Building, AlertCircle, Search, Briefcase
 import CardSkeleton from '../ui/CardSkeleton';
 import { ScaleIn, AnimatedButton } from '../ui/MotionComponents';
 import { InvestorInsightsData } from '../../services/openAIService';
+import { useAgentContext } from '../../context/AgentContext';
 
 interface InvestorInsightsCardProps {
-  data: InvestorInsightsData | null;
-  status: 'idle' | 'running' | 'completed' | 'error';
-  onRun: () => void;
+  startupId: string;
+  startupIdea: string;
   startupName: string;
-  error?: Error | string | null;
 }
 
 const InvestorInsightsCard: React.FC<InvestorInsightsCardProps> = ({
-  data,
-  status,
-  onRun,
+  startupId,
+  startupIdea,
   startupName,
-  error
 }) => {
+  const { agentData, agentStatus, agentErrors, triggerInvestorAgent } = useAgentContext();
+  const data = agentData.investor as InvestorInsightsData | null;
+  const status = agentStatus.investor;
+  const error = agentErrors.investor;
+
   const [activeInsight, setActiveInsight] = useState<string | null>('vcMatch');
   const [isDataValid, setIsDataValid] = useState<boolean>(false);
   
   // Validate data when it changes
   useEffect(() => {
+    console.log('InvestorInsightsCard data received from context:', data);
     if (data && data.vcMatches && data.metrics && data.marketSizing && data.fundingStrategy) {
       setIsDataValid(true);
     } else {
       setIsDataValid(false);
     }
   }, [data]);
+
+  // Function to run the agent (if needed, e.g., for retry)
+  const handleRunAgent = () => {
+    triggerInvestorAgent(startupId, startupIdea);
+  };
 
   if (status === 'idle') {
     return (
@@ -64,7 +72,7 @@ const InvestorInsightsCard: React.FC<InvestorInsightsCardProps> = ({
                 Generate targeted insights to help match your startup with potential investors.
               </p>
               <AnimatedButton
-                onClick={onRun}
+                onClick={handleRunAgent}
                 className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-md hover:from-green-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all"
               >
                 Generate Investor Insights
@@ -98,12 +106,12 @@ const InvestorInsightsCard: React.FC<InvestorInsightsCardProps> = ({
               <p className="text-sm text-gray-500">
                 Please ensure your pitch document has been generated first.
               </p>
-              <button
-                onClick={onRun}
+              <AnimatedButton
+                onClick={handleRunAgent}
                 className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-md hover:from-green-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all"
               >
                 Try Again
-              </button>
+              </AnimatedButton>
             </div>
           </div>
         </motion.div>
@@ -121,7 +129,7 @@ const InvestorInsightsCard: React.FC<InvestorInsightsCardProps> = ({
 
   // Render content based on active insight
   const renderInsightContent = () => {
-    if (!activeInsight || !data) return null;
+    if (!activeInsight || !data) return <p>Select an insight to view details.</p>;
 
     switch (activeInsight) {
       case 'vcMatch':
@@ -134,7 +142,7 @@ const InvestorInsightsCard: React.FC<InvestorInsightsCardProps> = ({
               </p>
             </div>
             
-            {data.vcMatches.map((vc, index) => (
+            {data.vcMatches.map((vc: { name: string; focus: string; stage: string; match: string; website: string; description: string; }, index: number) => (
               <div key={index} className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
                 <div className="flex justify-between items-start">
                   <h4 className="font-medium text-gray-900">{vc.name}</h4>
@@ -186,7 +194,7 @@ const InvestorInsightsCard: React.FC<InvestorInsightsCardProps> = ({
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {data.metrics.map((metric, index) => (
+              {data.metrics.map((metric: { title: string; value: string; description: string; }, index: number) => (
                 <div key={index} className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium text-gray-900">{metric.title}</h4>
@@ -205,83 +213,48 @@ const InvestorInsightsCard: React.FC<InvestorInsightsCardProps> = ({
         return (
           <div className="space-y-4">
             <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Market Sizing Analysis</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Market Sizing Overview</h3>
               <p className="text-sm text-gray-600">
-                Market sizing is a critical component that investors evaluate to understand growth potential.
+                Understanding your market size is key for investors to grasp your growth potential.
               </p>
             </div>
             
-            <div className="grid grid-cols-1 gap-4">
-              <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-                <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                    <TrendingUp className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Market Growth Rate</h4>
-                    <p className="text-sm text-gray-600">{data.marketSizing.growthRate}</p>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-medium text-gray-900">TAM</h4>
+                  <span className="font-bold text-blue-700">{data.marketSizing.tam.value}</span>
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="relative pt-1">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-semibold inline-block text-blue-600">
-                          TAM (Total Addressable Market)
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-semibold inline-block text-blue-600">
-                          {data.marketSizing.tam.value}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-blue-200">
-                      <div style={{ width: "100%" }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"></div>
-                    </div>
-                    <p className="text-xs text-gray-500">{data.marketSizing.tam.description}</p>
-                  </div>
-                  
-                  <div className="relative pt-1">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-semibold inline-block text-green-600">
-                          SAM (Serviceable Addressable Market)
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-semibold inline-block text-green-600">
-                          {data.marketSizing.sam.value}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-green-200">
-                      <div style={{ width: "40%" }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
-                    </div>
-                    <p className="text-xs text-gray-500">{data.marketSizing.sam.description}</p>
-                  </div>
-                  
-                  <div className="relative pt-1">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-semibold inline-block text-amber-600">
-                          SOM (Serviceable Obtainable Market)
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-semibold inline-block text-amber-600">
-                          {data.marketSizing.som.value}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-amber-200">
-                      <div style={{ width: "10%" }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-amber-500"></div>
-                    </div>
-                    <p className="text-xs text-gray-500">{data.marketSizing.som.description}</p>
-                    <p className="text-xs text-gray-700 mt-1">Timeline: {data.marketSizing.som.achievementTimeline}</p>
-                  </div>
+                <p className="text-xs text-gray-600">{data.marketSizing.tam.description}</p>
+              </div>
+              
+              <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-medium text-gray-900">SAM</h4>
+                  <span className="font-bold text-indigo-700">{data.marketSizing.sam.value}</span>
                 </div>
+                <p className="text-xs text-gray-600">{data.marketSizing.sam.description}</p>
+              </div>
+              
+              <div className="p-4 bg-purple-50 border border-purple-100 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-medium text-gray-900">SOM</h4>
+                  <span className="font-bold text-purple-700">{data.marketSizing.som.value}</span>
+                </div>
+                <p className="text-xs text-gray-600">{data.marketSizing.som.description}</p>
+                <div className="mt-2 text-xs">
+                  <span className="text-gray-500">Timeline: </span>
+                  <span className="font-medium text-purple-700">{data.marketSizing.som.achievementTimeline}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-white border border-gray-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-gray-900">Market Growth Rate</h4>
+                <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+                  {data.marketSizing.growthRate}
+                </span>
               </div>
             </div>
           </div>
@@ -291,122 +264,48 @@ const InvestorInsightsCard: React.FC<InvestorInsightsCardProps> = ({
         return (
           <div className="space-y-4">
             <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Funding Strategy</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Funding Strategy & Milestones</h3>
               <p className="text-sm text-gray-600">
-                Strategic approach to securing investment and allocating capital.
+                A clear strategy for using funds and achieving milestones is vital for investor confidence.
               </p>
             </div>
             
             <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Funding Allocation</h4>
-              <div className="space-y-3">
-                <div className="relative pt-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-semibold inline-block text-blue-600">
-                        Product Development
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-semibold inline-block text-blue-600">
-                        {data.fundingStrategy.allocationPercentages.productDevelopment}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-blue-200">
-                    <div 
-                      style={{ width: `${data.fundingStrategy.allocationPercentages.productDevelopment}%` }} 
-                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="relative pt-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-semibold inline-block text-green-600">
-                        Marketing & Sales
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-semibold inline-block text-green-600">
-                        {data.fundingStrategy.allocationPercentages.marketingAndSales}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-green-200">
-                    <div 
-                      style={{ width: `${data.fundingStrategy.allocationPercentages.marketingAndSales}%` }} 
-                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="relative pt-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-semibold inline-block text-purple-600">
-                        Operations
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-semibold inline-block text-purple-600">
-                        {data.fundingStrategy.allocationPercentages.operations}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-purple-200">
-                    <div 
-                      style={{ width: `${data.fundingStrategy.allocationPercentages.operations}%` }} 
-                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-500"
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="relative pt-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-semibold inline-block text-amber-600">
-                        Hiring
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-semibold inline-block text-amber-600">
-                        {data.fundingStrategy.allocationPercentages.hiring}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-amber-200">
-                    <div 
-                      style={{ width: `${data.fundingStrategy.allocationPercentages.hiring}%` }} 
-                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-amber-500"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Funding Milestones</h4>
-              <div className="space-y-3">
-                {data.fundingStrategy.milestones.map((milestone, index) => (
-                  <div key={index} className="flex items-start">
-                    <div className={`flex-shrink-0 h-4 w-4 rounded-full ${
-                      milestone.status === 'Current' ? 'bg-green-500' : 'bg-gray-300'
-                    } mt-0.5`}></div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">{milestone.name}</p>
-                      <p className="text-sm text-gray-500">{milestone.description}</p>
-                    </div>
+              <h4 className="font-medium text-gray-900 mb-2">Funding Allocation:</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                {Object.entries(data.fundingStrategy.allocationPercentages).map(([key, value]) => (
+                  <div key={key} className="text-center bg-gray-50 p-2 rounded-md">
+                    <p className="font-medium text-gray-900">{value}%</p>
+                    <p className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">Key Milestones:</h4>
+              <ul className="space-y-2">
+                {data.fundingStrategy.milestones.map((milestone: { name: string; description: string; status: string; }, index: number) => (
+                  <li key={index} className="flex items-start">
+                    <span className="mr-2 text-green-500">•</span>
+                    <div>
+                      <p className="font-medium text-gray-900">{milestone.name}</p>
+                      <p className="text-sm text-gray-600">{milestone.description}</p>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block ${
+                        milestone.status === 'Current' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {milestone.status}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         );
         
       default:
-        return null;
+        return <p>Select an insight to view details.</p>;
     }
   };
 

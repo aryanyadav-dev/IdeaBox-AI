@@ -138,7 +138,7 @@ const MVPCard: React.FC<MVPCardProps> = ({ data, status, onRun, error }) => {
   
   // Completed state with data
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">

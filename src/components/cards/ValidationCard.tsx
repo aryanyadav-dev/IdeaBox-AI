@@ -93,6 +93,11 @@ const ValidationCard: React.FC<ValidationCardProps> = ({ data, status, onRun }) 
     return 'bg-red-100';
   };
   
+  const formatScoreKey = (key: string) => {
+    const spacedKey = key.replace(/([A-Z])/g, ' $1');
+    return spacedKey.charAt(0).toUpperCase() + spacedKey.slice(1);
+  };
+  
   // Completed state with data
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -120,7 +125,7 @@ const ValidationCard: React.FC<ValidationCardProps> = ({ data, status, onRun }) 
                 <div key={key} className="border border-gray-200 rounded-md p-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">
-                      {key.charAt(0).toUpperCase() + key.slice(1)}
+                      {formatScoreKey(key)}
                     </span>
                     <span className={`text-lg font-bold ${getScoreColor(score)}`}>
                       {score}/10

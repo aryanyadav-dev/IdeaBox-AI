@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { RotateCw, ArrowLeft } from 'lucide-react';
+import { RotateCw, ArrowLeft, TrendingUp, ArrowRight } from 'lucide-react';
 import { useStartupContext } from '../context/StartupContext';
 import { useAgentContext } from '../context/AgentContext';
 import ResearchCard from '../components/cards/ResearchCard';
@@ -9,16 +9,29 @@ import ValidationCard from '../components/cards/ValidationCard';
 import MVPCard from '../components/cards/MVPCard';
 import PitchDocumentCard from '../components/cards/PitchDocumentCard';
 import InvestorInsightsCard from '../components/cards/InvestorInsightsCard';
+import RunwayAnalysisCard from '../components/cards/RunwayAnalysisCard';
+import GrowthOpportunityCard from '../components/cards/GrowthOpportunityCard';
+import InvestorStrategyCard from '../components/cards/InvestorStrategyCard';
+import ProductTeamHealthCard from '../components/cards/ProductTeamHealthCard';
+import MilestoneKPICard from '../components/cards/MilestoneKPICard';
 import AgentProgressBar from '../components/ui/AgentProgressBar';
 import AnimatedTabs from '../components/ui/AnimatedTabs';
 import ExportMenu from '../components/ui/ExportMenu';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ExportData } from '../utils/exportUtils';
+import ComplianceRiskCheckCard from '../components/cards/ComplianceRiskCheckCard';
+import CommunityFeedbackCard from '../components/cards/CommunityFeedbackCard';
+import FeaturePrioritizationCard from '../components/cards/FeaturePrioritizationCard';
+import InstantPrototypingCard from '../components/cards/InstantPrototypingCard';
+import TechStackOptimizationCard from '../components/cards/TechStackOptimizationCard';
+import TestSuiteGenerationCard from '../components/cards/TestSuiteGenerationCard';
+import PairProgrammingCard from '../components/cards/PairProgrammingCard';
+import MVPToScaleRoadmapCard from '../components/cards/MVPToScaleRoadmapCard';
 
 const DashboardPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getStartupById, setActiveStartup } = useStartupContext();
+  const { getStartupById, setActiveStartup, updateStartup } = useStartupContext();
   const { 
     triggerResearchAgent, 
     triggerWriterAgent,
@@ -26,6 +39,19 @@ const DashboardPage: React.FC = () => {
     triggerBuilderAgent,
     triggerPitchAgent,
     triggerInvestorAgent,
+    triggerRunwayAgent,
+    triggerGrowthAgent,
+    triggerInvestorStrategyAgent,
+    triggerProductTeamHealthAgent,
+    triggerMilestoneKPIAgent,
+    triggerFeaturePrioritizationAgent,
+    triggerInstantPrototypingAgent,
+    triggerTechStackOptimizationAgent,
+    triggerTestSuiteGenerationAgent,
+    triggerPairProgrammingAgent,
+    triggerMVPToScaleRoadmapAgent,
+    triggerCommunityFeedbackAgent,
+    triggerComplianceRiskCheckAgent,
     agentStatus,
     agentData,
     agentErrors
@@ -33,7 +59,6 @@ const DashboardPage: React.FC = () => {
   
   const [startup, setStartup] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all');
   
   useEffect(() => {
     if (id) {
@@ -45,6 +70,18 @@ const DashboardPage: React.FC = () => {
       setLoading(false);
     }
   }, [id, getStartupById, setActiveStartup]);
+  
+  const handleProceedToBuild = () => {
+    if (startup) {
+      updateStartup(startup.id, { goal: 'build' });
+    }
+  };
+
+  const handleProceedToPitch = () => {
+    if (startup) {
+      updateStartup(startup.id, { goal: 'pitch' });
+    }
+  };
   
   const handleRunAllAgents = async () => {
     if (!startup) return;
@@ -59,14 +96,30 @@ const DashboardPage: React.FC = () => {
     await triggerBuilderAgent(startup.id, startup.idea);
         break;
       case 'build':
-        // For build goal, run research and builder agents
+        // For build goal, run research and builder agents, plus new build agents
         await triggerResearchAgent(startup.id, startup.idea);
         await triggerBuilderAgent(startup.id, startup.idea);
+        await triggerFeaturePrioritizationAgent(startup.id, startup.idea, ''); // Placeholder backlog
+        await triggerInstantPrototypingAgent(startup.id, startup.idea, ''); // Placeholder featureDescriptions
+        await triggerTechStackOptimizationAgent(startup.id, startup.idea, ''); // Placeholder currentStack
+        await triggerTestSuiteGenerationAgent(startup.id, startup.idea, ''); // Placeholder featureDetails
+        await triggerPairProgrammingAgent(startup.id, startup.idea, ''); // Placeholder userStory
+        await triggerMVPToScaleRoadmapAgent(startup.id, startup.idea, ''); // Placeholder mvpDescription
+        await triggerCommunityFeedbackAgent(startup.id, startup.idea, ''); // Placeholder rawFeedback
+        await triggerComplianceRiskCheckAgent(startup.id, startup.projectDetails, startup.industry, startup.targetRegulations);
         break;
       case 'pitch':
         // For pitch goal, run pitch and investor agents
         await triggerPitchAgent(startup.id, startup.idea);
         await triggerInvestorAgent(startup.id, startup.idea);
+        break;
+      case 'evaluate':
+        // Trigger evaluate goal agents, now without manual data input
+        await triggerRunwayAgent(startup.id, startup.idea, startup.name);
+        await triggerGrowthAgent(startup.id, startup.idea, startup.name);
+        await triggerInvestorStrategyAgent(startup.id, startup.idea, startup.name);
+        await triggerProductTeamHealthAgent(startup.id, startup.idea, startup.name);
+        await triggerMilestoneKPIAgent(startup.id, startup.idea, startup.name);
         break;
     }
   };
@@ -89,13 +142,28 @@ const DashboardPage: React.FC = () => {
                agentStatus.validator === 'completed' &&
                agentStatus.builder === 'completed';
       case 'build':
-        // For build goal, check if research and builder agents are complete
+        // For build goal, check if all relevant agents are complete
         return agentStatus.research === 'completed' &&
-               agentStatus.builder === 'completed';
+               agentStatus.builder === 'completed' &&
+               agentStatus.featurePrioritization === 'completed' &&
+               agentStatus.instantPrototyping === 'completed' &&
+               agentStatus.techStackOptimization === 'completed' &&
+               agentStatus.testSuiteGeneration === 'completed' &&
+               agentStatus.pairProgramming === 'completed' &&
+               agentStatus.mvpToScaleRoadmap === 'completed' &&
+               agentStatus.communityFeedback === 'completed' &&
+               agentStatus.complianceRiskCheck === 'completed';
       case 'pitch':
         // For pitch goal, check if pitch and investor agents are complete
         return agentStatus.pitch === 'completed' &&
                agentStatus.investor === 'completed';
+      case 'evaluate':
+        // Check if all evaluate agents are complete
+        return agentStatus.runway === 'completed' &&
+               agentStatus.growth === 'completed' &&
+               agentStatus.investorStrategy === 'completed' &&
+               agentStatus.productTeamHealth === 'completed' &&
+               agentStatus.milestoneKPI === 'completed';
       default:
         return false;
     }
@@ -107,33 +175,6 @@ const DashboardPage: React.FC = () => {
   
   if (!startup) {
     return <div className="flex items-center justify-center h-full">Startup not found</div>;
-  }
-
-  // Define tabs based on goal
-  const tabs = startup.goal === 'pitch' ? [] : [
-    { id: 'all', label: 'All Insights', color: 'bg-teal-500 text-teal-600' }
-  ];
-  
-  // Add conditional tabs based on goal
-  if (startup.goal !== 'pitch') {
-    tabs.push({ id: 'research', label: 'Market Research', color: 'bg-gray-700 text-gray-800' });
-  }
-  
-  if (startup.goal === 'validate') {
-    tabs.push({ id: 'business', label: 'Business Plan', color: 'bg-blue-700 text-blue-600' });
-  }
-  
-  if (startup.goal === 'validate') {
-    tabs.push({ id: 'validation', label: 'Validation', color: 'bg-purple-600 text-purple-600' });
-  }
-  
-  if (startup.goal === 'validate' || startup.goal === 'build') {
-    tabs.push({ id: 'mvp', label: 'MVP Features', color: 'bg-orange-500 text-orange-500' });
-  }
-  
-  if (startup.goal === 'pitch') {
-    tabs.push({ id: 'pitch', label: 'Pitch Document', color: 'bg-amber-500 text-amber-600' });
-    tabs.push({ id: 'investor', label: 'Investor Insights', color: 'bg-green-600 text-green-700' });
   }
 
   // Animation variants for content
@@ -160,15 +201,29 @@ const DashboardPage: React.FC = () => {
   const exportData: ExportData = {
     startupName: startup.name,
     createdAt: new Date(startup.createdAt).toLocaleDateString(),
-    marketResearch: agentData.research || undefined,
-    businessPlan: agentData.writer || undefined,
+    marketResearch: startup.goal === 'pitch' ? undefined : agentData.research || undefined,
+    businessPlan: startup.goal === 'pitch' ? undefined : agentData.writer || undefined,
     validation: agentData.validator || undefined,
     mvpFeatures: agentData.builder || undefined,
-    pitchDocument: agentData.pitch || undefined
+    pitchDocument: agentData.pitch || undefined,
+    investorInsights: agentData.investor || undefined,
+    runwayAnalysis: agentData.runway || undefined,
+    growthMapping: agentData.growth || undefined,
+    investorStrategy: agentData.investorStrategy || undefined,
+    productTeamHealth: agentData.productTeamHealth || undefined,
+    milestoneKPI: agentData.milestoneKPI || undefined,
+    featurePrioritization: agentData.featurePrioritization || undefined,
+    instantPrototyping: agentData.instantPrototyping || undefined,
+    techStackOptimization: agentData.techStackOptimization || undefined,
+    testSuiteGeneration: agentData.testSuiteGeneration || undefined,
+    pairProgramming: agentData.pairProgramming || undefined,
+    mvpToScaleRoadmap: agentData.mvpToScaleRoadmap || undefined,
+    communityFeedback: agentData.communityFeedback || undefined,
+    complianceRiskCheck: agentData.complianceRiskCheck || undefined,
   };
   
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
       {/* Back button styled and positioned like the screenshot */}
       {isAnalysisComplete && (
         <div className="flex justify-end mb-6 mt-2">
@@ -185,17 +240,20 @@ const DashboardPage: React.FC = () => {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{startup.name}</h1>
-            <p className="text-gray-600 mt-1">Created on {new Date(startup.createdAt).toLocaleDateString()}</p>
-            <div className="mt-1">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            <h1 className="text-3xl font-extrabold text-gray-900">{startup.name}</h1>
+            <p className="text-gray-600 mt-2">Created on {new Date(startup.createdAt).toLocaleDateString()}</p>
+            <div className="mt-2">
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
                 startup.goal === 'validate' ? 'bg-blue-100 text-blue-800' : 
                 startup.goal === 'build' ? 'bg-purple-100 text-purple-800' : 
-                'bg-orange-100 text-orange-800'
+                startup.goal === 'pitch' ? 'bg-orange-100 text-orange-800' : 
+                'bg-green-100 text-green-800'
               }`}>
                 {startup.goal === 'validate' ? 'Validate Idea' : 
                  startup.goal === 'build' ? 'Build MVP' : 
-                 'Create Pitch'}
+                 startup.goal === 'pitch' ? 'Create Pitch' : 
+                 'Evaluate Existing Startup'
+                }
               </span>
             </div>
           </div>
@@ -206,7 +264,7 @@ const DashboardPage: React.FC = () => {
             <button 
               onClick={handleRunAllAgents}
               disabled={isAnyAgentRunning}
-              className={`px-4 py-2 text-sm text-white rounded-md flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              className={`px-5 py-2.5 text-sm text-white rounded-lg flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
                 isAnyAgentRunning
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-teal-600 hover:bg-teal-700 focus:ring-teal-500'
@@ -228,139 +286,286 @@ const DashboardPage: React.FC = () => {
         </div>
         
         {/* Agent Progress */}
-        <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-          <h3 className="font-medium text-gray-900 mb-4">Agent Progress</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {startup.goal !== 'pitch' && (
+        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+          <div className={`grid grid-cols-1 md:grid-cols-2 ${startup.goal === 'evaluate' ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-6`}>
+            {startup.goal === 'validate' && (
+              <>
             <AgentProgressBar 
               type="research"
               status={agentStatus.research}
               title="Market Research"
               onRun={() => triggerResearchAgent(startup.id, startup.idea)}
             />
-            )}
-            
-            {startup.goal === 'validate' && (
             <AgentProgressBar 
               type="writer"
               status={agentStatus.writer}
               title="Business Plan"
               onRun={() => triggerWriterAgent(startup.id, startup.idea)}
             />
-            )}
-            
-            {startup.goal === 'validate' && (
             <AgentProgressBar 
               type="validator"
               status={agentStatus.validator}
-              title="Validation"
+                  title="Market Validation"
               onRun={() => triggerValidatorAgent(startup.id, startup.idea)}
             />
+                <AgentProgressBar 
+                  type="builder"
+                  status={agentStatus.builder}
+                  title="MVP Builder"
+                  onRun={() => triggerBuilderAgent(startup.id, startup.idea)}
+                />
+              </>
             )}
             
-            {(startup.goal === 'validate' || startup.goal === 'build') && (
+            {startup.goal === 'build' && (
+              <>
+                <AgentProgressBar 
+                  type="research"
+                  status={agentStatus.research}
+                  title="Market Research"
+                  onRun={() => triggerResearchAgent(startup.id, startup.idea)}
+                />
             <AgentProgressBar 
               type="builder"
               status={agentStatus.builder}
-              title="MVP Features"
+              title="MVP Builder"
               onRun={() => triggerBuilderAgent(startup.id, startup.idea)}
             />
+                <AgentProgressBar 
+                  type="featurePrioritization"
+                  status={agentStatus.featurePrioritization}
+                  title="Feature Prioritization"
+                  onRun={() => triggerFeaturePrioritizationAgent(startup.id, startup.idea, '')}
+                />
+                <AgentProgressBar 
+                  type="instantPrototyping"
+                  status={agentStatus.instantPrototyping}
+                  title="Instant Prototyping"
+                  onRun={() => triggerInstantPrototypingAgent(startup.id, startup.idea, '')}
+                />
+                <AgentProgressBar 
+                  type="techStackOptimization"
+                  status={agentStatus.techStackOptimization}
+                  title="Tech Stack Optimization"
+                  onRun={() => triggerTechStackOptimizationAgent(startup.id, startup.idea, '')}
+                />
+                <AgentProgressBar 
+                  type="testSuiteGeneration"
+                  status={agentStatus.testSuiteGeneration}
+                  title="Test Suite Generation"
+                  onRun={() => triggerTestSuiteGenerationAgent(startup.id, startup.idea, '')}
+                />
+                <AgentProgressBar 
+                  type="pairProgramming"
+                  status={agentStatus.pairProgramming}
+                  title="AI Pair Programming"
+                  onRun={() => triggerPairProgrammingAgent(startup.id, startup.idea, '')}
+                />
+                <AgentProgressBar 
+                  type="mvpToScaleRoadmap"
+                  status={agentStatus.mvpToScaleRoadmap}
+                  title="MVP-to-Scale Roadmap"
+                  onRun={() => triggerMVPToScaleRoadmapAgent(startup.id, startup.idea, '')}
+                />
+                <AgentProgressBar 
+                  type="communityFeedback"
+                  status={agentStatus.communityFeedback}
+                  title="Community & Expert Feedback"
+                  onRun={() => triggerCommunityFeedbackAgent(startup.id, startup.idea, '')}
+                />
+                <AgentProgressBar 
+                  type="complianceRiskCheck"
+                  status={agentStatus.complianceRiskCheck}
+                  title="Compliance & Risk Check"
+                  onRun={() => triggerComplianceRiskCheckAgent(startup.id, startup.idea, '', startup.industry)}
+                />
+              </>
             )}
             
             {startup.goal === 'pitch' && (
+              <>
               <AgentProgressBar 
                 type="pitch"
                 status={agentStatus.pitch}
                 title="Pitch Document"
                 onRun={() => triggerPitchAgent(startup.id, startup.idea)}
               />
+                <AgentProgressBar 
+                  type="investor"
+                  status={agentStatus.investor}
+                  title="Investor Insights"
+                  onRun={() => triggerInvestorAgent(startup.id, startup.idea)}
+                />
+              </>
             )}
-            
-            {startup.goal === 'pitch' && (
-              <AgentProgressBar 
-                type="investor"
-                status={agentStatus.investor}
-                title="Investor Insights"
-                onRun={() => triggerInvestorAgent(startup.id, startup.idea)}
-              />
+
+            {startup.goal === 'evaluate' && (
+              <>
+                <AgentProgressBar
+                  type="runway"
+                  status={agentStatus.runway}
+                  title="Runway & Growth Guidance"
+                  onRun={() => triggerRunwayAgent(startup.id, startup.idea, startup.name)}
+                />
+                <AgentProgressBar
+                  type="growth"
+                  status={agentStatus.growth}
+                  title="Growth Opportunity Mapping"
+                  onRun={() => triggerGrowthAgent(startup.id, startup.idea, startup.name)}
+                />
+                <AgentProgressBar
+                  type="investorStrategy"
+                  status={agentStatus.investorStrategy}
+                  title="Investor & Fundraising Strategy"
+                  onRun={() => triggerInvestorStrategyAgent(startup.id, startup.idea, startup.name)}
+                />
+                <AgentProgressBar
+                  type="productTeamHealth"
+                  status={agentStatus.productTeamHealth}
+                  title="Product & Team Health Check"
+                  onRun={() => triggerProductTeamHealthAgent(startup.id, startup.idea, startup.name)}
+                />
+                <AgentProgressBar
+                  type="milestoneKPI"
+                  status={agentStatus.milestoneKPI}
+                  title="Milestone & KPI Tracking"
+                  onRun={() => triggerMilestoneKPIAgent(startup.id, startup.idea, startup.name)}
+                />
+              </>
             )}
+
           </div>
         </div>
         
-        {/* Animated Tabs - Only show tabs for non-pitch goals */}
-        {startup.goal !== 'pitch' && (
-        <AnimatedTabs 
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          useTabColors={true}
-        />
-        )}
-      </div>
-      
+        {/* Main Content Area */}
+        <div className="mt-8">
+          {startup.goal === 'validate' && (
       <motion.div 
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+              key="validate-content"
         variants={contentVariants}
         initial="hidden"
         animate="visible"
-        key={activeTab}
+              exit="exit"
       >
-        {(activeTab === 'all' || activeTab === 'research') && startup.goal !== 'pitch' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ResearchCard 
+                  status={agentStatus.research} 
             data={agentData.research} 
-            status={agentStatus.research}
             onRun={() => triggerResearchAgent(startup.id, startup.idea)}
-            error={agentErrors.research || undefined}
+                  error={agentErrors.research || undefined}
           />
-        )}
-        
-        {(activeTab === 'all' || activeTab === 'business') && startup.goal === 'validate' && (
           <BusinessPlanCard 
+                  status={agentStatus.writer} 
             data={agentData.writer} 
-            status={agentStatus.writer}
             onRun={() => triggerWriterAgent(startup.id, startup.idea)}
           />
-        )}
-        
-        {(activeTab === 'all' || activeTab === 'validation') && startup.goal === 'validate' && (
           <ValidationCard 
+                  status={agentStatus.validator} 
             data={agentData.validator} 
-            status={agentStatus.validator}
             onRun={() => triggerValidatorAgent(startup.id, startup.idea)}
+                />
+                <MVPCard 
+                  status={agentStatus.builder} 
+                  data={agentData.builder} 
+                  onRun={() => triggerBuilderAgent(startup.id, startup.idea)}
+                  error={agentErrors.builder || undefined}
           />
+              </div>
+            </motion.div>
         )}
         
-        {(activeTab === 'all' || activeTab === 'mvp') && (startup.goal === 'validate' || startup.goal === 'build') && (
+          {startup.goal === 'build' && (
+            <motion.div
+              key="build-content"
+              variants={contentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ResearchCard
+                  status={agentStatus.research}
+                  data={agentData.research}
+                  onRun={() => triggerResearchAgent(startup.id, startup.idea)}
+                  error={agentErrors.research || undefined}
+                />
           <MVPCard 
+                  status={agentStatus.builder}
             data={agentData.builder} 
-            status={agentStatus.builder}
             onRun={() => triggerBuilderAgent(startup.id, startup.idea)}
-            error={agentErrors.builder}
+                  error={agentErrors.builder || undefined}
           />
-        )}
-        
-        {/* For pitch goal, always show both cards side by side regardless of tab */}
-        {startup.goal === 'pitch' && (
-          <>
-          <PitchDocumentCard 
-            data={agentData.pitch} 
-            status={agentStatus.pitch}
-            onRun={() => triggerPitchAgent(startup.id, startup.idea)}
-            error={agentErrors.pitch}
-            startupName={startup.name}
-            createdAt={new Date(startup.createdAt).toLocaleDateString()}
-          />
-            
-            <InvestorInsightsCard 
-              data={agentData.investor} 
-              status={agentStatus.investor}
-              onRun={() => triggerInvestorAgent(startup.id, startup.idea)}
-              error={agentErrors.investor}
-              startupName={startup.name}
-            />
-          </>
-        )}
+                <FeaturePrioritizationCard startupId={startup.id} />
+                <InstantPrototypingCard startupId={startup.id} />
+                <TechStackOptimizationCard startupId={startup.id} />
+                <TestSuiteGenerationCard startupId={startup.id} />
+                <PairProgrammingCard startupId={startup.id} />
+                <MVPToScaleRoadmapCard startupId={startup.id} />
+                <CommunityFeedbackCard startupId={startup.id} />
+                <ComplianceRiskCheckCard projectId={startup.id} />
+              </div>
+            </motion.div>
+          )}
+
+          {startup.goal === 'pitch' && (
+            <motion.div
+              key="pitch-content"
+              variants={contentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <PitchDocumentCard startupId={startup.id} startupName={startup.name} createdAt={startup.createdAt} />
+                <InvestorInsightsCard startupId={startup.id} startupIdea={startup.idea} startupName={startup.name} />
+              </div>
+            </motion.div>
+          )}
+
+          {startup.goal === 'evaluate' && (
+            <motion.div
+              key="evaluate-content"
+              variants={contentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <RunwayAnalysisCard startupId={startup.id} startupName={startup.name} startupIdea={startup.idea} />
+                <GrowthOpportunityCard startupId={startup.id} startupName={startup.name} startupIdea={startup.idea} />
+                <InvestorStrategyCard startupId={startup.id} startupName={startup.name} startupIdea={startup.idea} />
+                <ProductTeamHealthCard startupId={startup.id} startupName={startup.name} startupIdea={startup.idea} />
+                <MilestoneKPICard startupId={startup.id} startupName={startup.name} startupIdea={startup.idea} />
+              </div>
       </motion.div>
+          )}
+
+        </div>
+
+      </div>
+
+      {isAnalysisComplete && (
+        <div className="fixed bottom-8 right-8 flex flex-col gap-4">
+          {startup.goal === 'validate' && (
+            <button
+              onClick={handleProceedToBuild}
+              className="group inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-gray-800 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 transform hover:-translate-y-1"
+            >
+              <span>Proceed to Build MVP</span>
+              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </button>
+          )}
+          {startup.goal === 'build' && (
+            <button
+              onClick={handleProceedToPitch}
+              className="inline-flex items-center justify-center gap-3 px-6 py-3 text-base font-medium text-white bg-orange-600 rounded-lg shadow-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-transform transform hover:scale-105"
+            >
+              <span>Proceed to Create Pitch</span>
+              <ArrowRight size={20} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

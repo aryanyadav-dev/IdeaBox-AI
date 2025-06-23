@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Presentation, AlertCircle, Download, ChevronRight, PieChart, Zap, Users, BarChart, FileQuestion, Layout, Palette, ExternalLink, FileText } from 'lucide-react';
+import { Presentation, AlertCircle, Download, ChevronRight, PieChart, Zap, Users, BarChart, FileQuestion, Layout, Palette, ExternalLink, FileText, TrendingUp } from 'lucide-react';
 import CardSkeleton from '../ui/CardSkeleton';
 import { ScaleIn, AnimatedButton } from '../ui/MotionComponents';
 import { exportPitchDocument, exportPitchDocumentAsWord } from '../../utils/exportUtils';
+import { useAgentContext } from '../../context/AgentContext';
 
 interface PitchDocumentCardProps {
-  data: any;
-  status: 'idle' | 'running' | 'completed' | 'error';
-  onRun: () => void;
+  startupId: string;
   startupName: string;
   createdAt: string;
-  error?: Error | string | null;
 }
 
 // Color palette component
@@ -94,14 +92,12 @@ const isValidData = (data: any) => {
   }
 };
 
-const PitchDocumentCard: React.FC<PitchDocumentCardProps> = ({ 
-  data, 
-  status, 
-  onRun, 
-  startupName, 
-  createdAt,
-  error
-}) => {
+const PitchDocumentCard: React.FC<PitchDocumentCardProps> = ({ startupId, startupName, createdAt }) => {
+  const { agentData, agentStatus, agentErrors, triggerPitchAgent } = useAgentContext();
+  const data = agentData.pitch;
+  const status = agentStatus.pitch;
+  const error = agentErrors.pitch;
+
   const [activeSection, setActiveSection] = useState<string | null>('elevatorPitch');
   const [isDataValid, setIsDataValid] = useState<boolean>(false);
   
@@ -127,7 +123,7 @@ const PitchDocumentCard: React.FC<PitchDocumentCardProps> = ({
   
   // Validate data when it changes
   useEffect(() => {
-    console.log('PitchDocumentCard data received:', data);
+    console.log('PitchDocumentCard data received from context:', data);
     
     // Detailed logging of data structure
     if (data) {
@@ -207,578 +203,374 @@ const PitchDocumentCard: React.FC<PitchDocumentCardProps> = ({
         pitchDocument: data
       });
     } catch (error) {
-      console.error("Word export error:", error);
+      console.error("Export error:", error);
     }
   };
 
-  if (status === 'idle') {
-    return (
-      <ScaleIn>
-        <motion.div 
-          className="bg-white rounded-xl shadow-sm border border-gray-200 h-full"
-          whileHover={{ 
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-            y: -2
-          }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="p-5">
-            <div className="text-center py-8">
-              <motion.div 
-                className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center mb-4"
-                animate={{ 
-                  scale: [1, 1.05, 1],
-                  boxShadow: [
-                    '0 0 0 rgba(251, 146, 60, 0)',
-                    '0 0 20px rgba(251, 146, 60, 0.3)',
-                    '0 0 0 rgba(251, 146, 60, 0)'
-                  ] 
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                <Presentation className="w-8 h-8 text-orange-500" />
-              </motion.div>
-              <h4 className="text-lg font-medium text-gray-900 mb-2">Create Investor Pitch</h4>
-              <p className="text-gray-500 text-sm mb-4 max-w-xs mx-auto">
-                Generate a comprehensive pitch document ready to present to potential investors.
-              </p>
-              <AnimatedButton
-                onClick={onRun}
-                className="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-md hover:from-orange-600 hover:to-amber-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all"
-              >
-                Create Pitch Document
-              </AnimatedButton>
-            </div>
-          </div>
-        </motion.div>
-      </ScaleIn>
-    );
-  }
-
-  if (status === 'running') {
-    return <CardSkeleton title="Investor Pitch" icon={<Presentation />} color="orange" />;
-  }
-
-  if (status === 'error' || (status === 'completed' && !isDataValid) || error) {
-    console.log("Pitch document generation issue:", status === 'error' ? 'API error' : 'Validation failed', data);
-    
-    // Determine error message based on status and data
-    let errorMessage = "We encountered an error while creating your pitch document.";
-    
-    if (status === 'completed' && !isDataValid) {
-      if (!data) {
-        errorMessage = "No pitch document data was returned. This could be due to a network issue or an API limitation.";
-      } else if (data.financialProjections === undefined) {
-        errorMessage = "The generated pitch document is missing required financial projections.";
-      } else {
-        errorMessage = "The generated pitch document is missing some required information or has invalid content.";
-      }
-    }
-    
-    return (
-      <ScaleIn>
-        <motion.div className="bg-white rounded-xl shadow-sm border border-gray-200 h-full">
-          <div className="p-5">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-3">
-                <AlertCircle className="w-5 h-5 text-red-500" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900">Pitch Document Generation Error</h3>
-            </div>
-            <p className="text-gray-500 mb-4">
-              {errorMessage}
-            </p>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-500">
-                Try using a more descriptive startup idea or wait a moment and try again.
-              </p>
-              <button
-                onClick={onRun}
-                className="w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-md hover:from-orange-600 hover:to-amber-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      </ScaleIn>
-    );
-  }
-
-  // Expanded section list with added sections
-  const sections = [
-    { id: 'elevatorPitch', label: 'Elevator Pitch', icon: <Zap className="h-4 w-4 text-amber-500" /> },
-    { id: 'executiveSummary', label: 'Executive Summary', icon: <ChevronRight className="h-4 w-4 text-gray-500" /> },
-    { id: 'problemStatement', label: 'Problem Statement', icon: <ChevronRight className="h-4 w-4 text-gray-500" /> },
-    { id: 'solution', label: 'Solution', icon: <ChevronRight className="h-4 w-4 text-gray-500" /> },
-    { id: 'marketOpportunity', label: 'Market Opportunity', icon: <ChevronRight className="h-4 w-4 text-gray-500" /> },
-    { id: 'marketSizing', label: 'Market Sizing', icon: <PieChart className="h-4 w-4 text-blue-500" /> },
-    { id: 'businessModel', label: 'Business Model', icon: <ChevronRight className="h-4 w-4 text-gray-500" /> },
-    { id: 'keyMetrics', label: 'Key Metrics', icon: <BarChart className="h-4 w-4 text-green-500" /> },
-    { id: 'competitiveAnalysis', label: 'Competitive Analysis', icon: <ChevronRight className="h-4 w-4 text-gray-500" /> },
-    { id: 'competitiveLandscape', label: 'Competitive Landscape', icon: <Layout className="h-4 w-4 text-purple-500" /> },
-    { id: 'traction', label: 'Traction & Milestones', icon: <ChevronRight className="h-4 w-4 text-gray-500" /> },
-    { id: 'teamOverview', label: 'Team', icon: <Users className="h-4 w-4 text-indigo-500" /> },
-    { id: 'financialProjections', label: 'Financial Projections', icon: <ChevronRight className="h-4 w-4 text-gray-500" />, isObject: true },
-    { id: 'fundingRequest', label: 'Funding Request', icon: <ChevronRight className="h-4 w-4 text-gray-500" /> },
-    { id: 'investorFaq', label: 'Investor FAQ', icon: <FileQuestion className="h-4 w-4 text-orange-500" /> },
-    { id: 'pitchDeck', label: 'Pitch Deck Slides', icon: <Presentation className="h-4 w-4 text-amber-500" /> },
-    { id: 'visualElements', label: 'Brand Elements', icon: <Palette className="h-4 w-4 text-rose-500" /> }
-  ];
-
-  // Safely get section content
   const getSectionContent = (sectionId: string) => {
-    if (!data) return null;
-    
-    try {
-      if (sectionId === 'financialProjections') {
-        return data.financialProjections || null;
-      }
-      return data[sectionId] || null;
-    } catch (error) {
-      console.error(`Error accessing section ${sectionId}:`, error);
-      return null;
-    }
-  };
+    if (!data) return <p>No data available yet. Run the agent to generate content.</p>;
 
-  // Safely render content
-  const renderContent = () => {
-    try {
-      if (!activeSection) return <div className="text-gray-500">Please select a section</div>;
-      
-      const sectionContent = getSectionContent(activeSection);
-      
-      if (!sectionContent) {
-        return <div className="text-gray-500">No data available for this section</div>;
-      }
-
-      // Handle different content types based on section
-      switch (activeSection) {
-        case 'elevatorPitch':
+    switch (sectionId) {
+      case 'elevatorPitch':
+    return (
+      <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Elevator Pitch</h4>
+            <p className="text-gray-700 whitespace-pre-wrap">{data.elevatorPitch || 'No elevator pitch generated.'}</p>
+      </ScaleIn>
+    );
+      case 'executiveSummary':
+    return (
+      <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Executive Summary</h4>
+            <p className="text-gray-700 whitespace-pre-wrap">{data.executiveSummary}</p>
+      </ScaleIn>
+    );
+      case 'problemStatement':
           return (
-            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-100">
-              <blockquote className="text-lg font-medium text-gray-900 italic">
-                "{sectionContent}"
-              </blockquote>
-            </div>
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Problem Statement</h4>
+            <p className="text-gray-700 whitespace-pre-wrap">{data.problemStatement}</p>
+          </ScaleIn>
           );
-          
-        case 'keyMetrics':
+      case 'solution':
           return (
-            <div className="space-y-4">
-              {sectionContent.map((metric: any, index: number) => (
-                <div key={index} className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-gray-900">{metric.title}</h4>
-                    <span className="font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md text-sm">
-                      {metric.value}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600">{metric.description}</p>
-                </div>
-              ))}
-            </div>
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Solution</h4>
+            <p className="text-gray-700 whitespace-pre-wrap">{data.solution}</p>
+          </ScaleIn>
           );
-          
-        case 'competitiveLandscape':
+      case 'marketOpportunity':
           return (
-            <div className="space-y-4">
-              <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Competitive Dimensions</h4>
-                <div className="flex justify-around">
-                  <div className="text-center">
-                    <span className="text-sm text-gray-500">X-Axis</span>
-                    <p className="font-medium text-gray-900">{sectionContent.dimensions.xAxis}</p>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-sm text-gray-500">Y-Axis</span>
-                    <p className="font-medium text-gray-900">{sectionContent.dimensions.yAxis}</p>
-                  </div>
-                </div>
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Market Opportunity</h4>
+            <p className="text-gray-700 whitespace-pre-wrap">{data.marketOpportunity}</p>
+            {data.marketSizing && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h5 className="font-medium text-md mb-2">Market Sizing:</h5>
+                <p className="text-gray-700"><strong>TAM:</strong> {data.marketSizing.tam?.value} - {data.marketSizing.tam?.description}</p>
+                <p className="text-gray-700"><strong>SAM:</strong> {data.marketSizing.sam?.value} - {data.marketSizing.sam?.description}</p>
+                <p className="text-gray-700"><strong>SOM:</strong> {data.marketSizing.som?.value} - {data.marketSizing.som?.description} (Achieve in {data.marketSizing.som?.achievementTimeline})</p>
+                <p className="text-gray-700"><strong>Growth Rate:</strong> {data.marketSizing.growthRate}</p>
               </div>
-              
-              <div className="relative h-80 border border-gray-200 rounded-lg p-4 bg-white">
-                <div className="absolute top-2 left-2 text-xs text-gray-500">
-                  {sectionContent.dimensions.yAxis}
-                </div>
-                <div className="absolute bottom-2 left-2 text-xs text-gray-500 transform rotate-90 origin-bottom-left">
-                  {sectionContent.dimensions.xAxis}
-                </div>
-                
+            )}
+          </ScaleIn>
+        );
+      case 'businessModel':
+        return (
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Business Model</h4>
+            <p className="text-gray-700 whitespace-pre-wrap">{data.businessModel}</p>
+          </ScaleIn>
+        );
+      case 'competitiveAnalysis':
+        return (
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Competitive Analysis</h4>
+            <p className="text-gray-700 whitespace-pre-wrap">{data.competitiveAnalysis}</p>
+            {data.competitiveLandscape && data.competitiveLandscape.dimensions && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h5 className="font-medium text-md mb-2">Competitive Landscape ({data.competitiveLandscape.dimensions.xAxis} vs. {data.competitiveLandscape.dimensions.yAxis}):</h5>
+                <div className="relative w-full h-48 bg-white border border-gray-300 rounded-lg my-4">
                 {/* Render competitors */}
-                {sectionContent.competitors.map((comp: any, idx: number) => (
+                  {data.competitiveLandscape.competitors?.map((comp: any, idx: number) => (
                   <div 
                     key={idx}
-                    className={`absolute bg-gray-100 border border-gray-300 rounded-full ${comp.website ? 'cursor-pointer hover:bg-gray-200 hover:scale-110 transition-transform' : ''} w-12 h-12 flex items-center justify-center text-xs`}
+                      className="absolute p-1 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center shadow-md"
                     style={{ 
-                      bottom: `${comp.yPosition}%`, 
-                      left: `${comp.xPosition}%`,
-                      transform: 'translate(-50%, 50%)'
+                        left: `calc(${comp.xPosition}% - 10px)`,
+                        top: `calc(${100 - comp.yPosition}% - 10px)`,
+                        width: '20px',
+                        height: '20px',
                     }}
-                    title={`${comp.name}: ${comp.strengths.join(', ')}${comp.website ? ' - Click to visit website' : ''}`}
-                    onClick={() => comp.website && handleOpenCompetitorURL(comp.website)}
+                      title={`${comp.name} (${comp.strengths.join(', ')})`}
                   >
-                    {comp.name.substring(0, 2)}
-                    {comp.website && (
-                      <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full"></span>
-                    )}
+                      {comp.name.charAt(0)}
                   </div>
                 ))}
-                
                 {/* Render our position */}
+                  {data.competitiveLandscape.ourPosition && (
                 <div 
-                  className="absolute bg-amber-500 text-white border-2 border-amber-600 rounded-full w-14 h-14 flex items-center justify-center text-xs font-bold z-10"
+                      className="absolute p-1 rounded-full bg-green-500 text-white text-xs flex items-center justify-center shadow-md border-2 border-green-700"
                   style={{ 
-                    bottom: `${sectionContent.ourPosition.yPosition}%`, 
-                    left: `${sectionContent.ourPosition.xPosition}%`,
-                    transform: 'translate(-50%, 50%)'
+                        left: `calc(${data.competitiveLandscape.ourPosition.xPosition}% - 10px)`,
+                        top: `calc(${100 - data.competitiveLandscape.ourPosition.yPosition}% - 10px)`,
+                        width: '20px',
+                        height: '20px',
                   }}
-                  title={sectionContent.ourPosition.uniqueAdvantages.join(', ')}
+                      title={`Our Position (${data.competitiveLandscape.ourPosition.uniqueAdvantages.join(', ')})`}
                 >
-                  US
+                      You
                 </div>
+                  )}
+                  {/* Axis Labels */}
+                  <span className="absolute bottom-1 left-1 text-xs text-gray-500">Low {data.competitiveLandscape.dimensions.xAxis}</span>
+                  <span className="absolute bottom-1 right-1 text-xs text-gray-500">High {data.competitiveLandscape.dimensions.xAxis}</span>
+                  <span className="absolute top-1 left-1 text-xs text-gray-500" style={{ transform: 'rotate(-90deg)', transformOrigin: 'bottom left' }}>High {data.competitiveLandscape.dimensions.yAxis}</span>
+                  <span className="absolute bottom-1 left-1 text-xs text-gray-500" style={{ transform: 'rotate(-90deg)', transformOrigin: 'bottom left' }}>Low {data.competitiveLandscape.dimensions.yAxis}</span>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Our Unique Advantages</h4>
-                  <ul className="space-y-1">
-                    {sectionContent.ourPosition.uniqueAdvantages.map((adv: string, idx: number) => (
-                      <li key={idx} className="flex items-start">
-                        <span className="text-amber-500 mr-2">•</span>
-                        <span className="text-sm text-gray-700">{adv}</span>
+                <h6 className="font-medium text-sm mt-4 mb-2">Competitors:</h6>
+                <ul className="list-disc list-inside text-gray-700">
+                  {data.competitiveLandscape.competitors?.map((comp: any, idx: number) => (
+                    <li key={idx} className="mb-1">
+                      <strong>{comp.name}:</strong> {comp.description || 'No description provided.'} (<a href="#" onClick={() => handleOpenCompetitorURL(comp.website)} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">{comp.website || 'N/A'} <ExternalLink size={12} className="inline" /></a>)
+                      <ul className="list-circle list-inside ml-4 text-sm text-gray-600">
+                        <li>Strengths: {comp.strengths?.join(', ') || 'N/A'}</li>
+                        <li>Weaknesses: {comp.weaknesses?.join(', ') || 'N/A'}</li>
+                      </ul>
                       </li>
                     ))}
                   </ul>
-                </div>
-                
-                <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Competitor Analysis</h4>
-                  <div className="space-y-3 max-h-40 overflow-y-auto">
-                    {sectionContent.competitors.map((comp: any, idx: number) => (
-                      <div key={idx} className="text-sm">
-                        <div className="font-medium text-gray-900 flex items-center">
-                          {comp.name}
-                          {comp.website && (
-                            <button 
-                              onClick={() => handleOpenCompetitorURL(comp.website)}
-                              className="ml-2 text-blue-500 hover:text-blue-700 inline-flex items-center"
-                              aria-label={`Visit ${comp.name} website`}
-                            >
-                              <ExternalLink size={12} className="mr-0.5" />
-                              <span className="text-xs">Visit</span>
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 mt-1">
-                          <div>
-                            <span className="text-xs text-green-600">Strengths:</span>
-                            <ul className="text-xs text-gray-600">
-                              {comp.strengths.map((str: string, i: number) => (
-                                <li key={i}>{str}</li>
+                {data.competitiveLandscape.ourPosition && data.competitiveLandscape.ourPosition.uniqueAdvantages && (
+                  <div className="mt-4">
+                    <h6 className="font-medium text-sm mb-2">Our Unique Advantages:</h6>
+                    <ul className="list-disc list-inside text-gray-700">
+                      {data.competitiveLandscape.ourPosition.uniqueAdvantages.map((advantage: string, idx: number) => (
+                        <li key={idx}>{advantage}</li>
                               ))}
                             </ul>
-                          </div>
-                          <div>
-                            <span className="text-xs text-red-600">Weaknesses:</span>
-                            <ul className="text-xs text-gray-600">
-                              {comp.weaknesses.map((wk: string, i: number) => (
-                                <li key={i}>{wk}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
                   </div>
-                </div>
-              </div>
-              
-              {/* Competitor Links Section */}
-              {sectionContent.competitors.some((comp: any) => comp.website) && (
-                <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Competitor Websites</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {sectionContent.competitors
-                      .filter((comp: any) => comp.website)
-                      .map((comp: any, idx: number) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleOpenCompetitorURL(comp.website)}
-                          className="flex items-center p-2 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 text-blue-600 hover:text-blue-800 transition-colors"
-                        >
-                          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-medium">
-                            {comp.name.substring(0, 2)}
-                          </div>
-                          <span className="text-sm mr-1">{comp.name}</span>
-                          <span className="text-xs text-gray-500 truncate flex-1 text-left ml-1 max-w-[120px] overflow-hidden">
-                            {comp.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                          </span>
-                          <ExternalLink size={12} className="ml-auto flex-shrink-0" />
-                        </button>
-                      ))}
-                  </div>
+                )}
                 </div>
               )}
-            </div>
+          </ScaleIn>
           );
-          
-        case 'marketSizing':
+      case 'traction':
           return (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="text-sm font-medium text-gray-900">TAM</h4>
-                    <span className="font-bold text-blue-700">{sectionContent.tam.value}</span>
-                  </div>
-                  <p className="text-xs text-gray-600">{sectionContent.tam.description}</p>
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Traction & Milestones</h4>
+            <p className="text-gray-700 whitespace-pre-wrap">{data.traction}</p>
+            {data.keyMetrics && data.keyMetrics.length > 0 && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h5 className="font-medium text-md mb-2">Key Metrics:</h5>
+                {data.keyMetrics.map((metric: any, idx: number) => (
+                  <p key={idx} className="text-gray-700 mb-1"><strong>{metric.title}:</strong> {metric.value} - {metric.description}</p>
+                ))}
+              </div>
+            )}
+          </ScaleIn>
+        );
+      case 'teamOverview':
+        return (
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Team Overview</h4>
+            <p className="text-gray-700 whitespace-pre-wrap">{data.teamOverview}</p>
+          </ScaleIn>
+        );
+      case 'financialProjections':
+        return (
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Financial Projections</h4>
+            {data.financialProjections ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-gray-700">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="font-medium">Year 1:</p>
+                  <p className="whitespace-pre-wrap">{data.financialProjections.year1}</p>
                 </div>
-                
-                <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="text-sm font-medium text-gray-900">SAM</h4>
-                    <span className="font-bold text-indigo-700">{sectionContent.sam.value}</span>
-                  </div>
-                  <p className="text-xs text-gray-600">{sectionContent.sam.description}</p>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="font-medium">Year 2:</p>
+                  <p className="whitespace-pre-wrap">{data.financialProjections.year2}</p>
                 </div>
-                
-                <div className="p-4 bg-purple-50 border border-purple-100 rounded-lg">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="text-sm font-medium text-gray-900">SOM</h4>
-                    <span className="font-bold text-purple-700">{sectionContent.som.value}</span>
-                  </div>
-                  <p className="text-xs text-gray-600">{sectionContent.som.description}</p>
-                  <div className="mt-2 text-xs">
-                    <span className="text-gray-500">Timeline: </span>
-                    <span className="font-medium text-purple-700">{sectionContent.som.achievementTimeline}</span>
-                  </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="font-medium">Year 3:</p>
+                  <p className="whitespace-pre-wrap">{data.financialProjections.year3}</p>
                 </div>
               </div>
-              
-              <div className="p-4 bg-white border border-gray-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium text-gray-900">Market Growth Rate</h4>
-                  <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">
-                    {sectionContent.growthRate}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Market sizing funnel visualization */}
-              <div className="relative h-60 p-4">
-                <div className="absolute top-0 w-full h-16 bg-blue-100 rounded-t-lg flex items-center justify-center">
-                  <span className="font-medium text-blue-700">TAM: {sectionContent.tam.value}</span>
-                </div>
-                <div className="absolute top-16 w-3/4 h-16 bg-indigo-100 rounded-t-lg left-1/2 transform -translate-x-1/2 flex items-center justify-center">
-                  <span className="font-medium text-indigo-700">SAM: {sectionContent.sam.value}</span>
-                </div>
-                <div className="absolute top-32 w-2/5 h-16 bg-purple-100 rounded-t-lg left-1/2 transform -translate-x-1/2 flex items-center justify-center">
-                  <span className="font-medium text-purple-700">SOM: {sectionContent.som.value}</span>
-                </div>
-              </div>
-            </div>
+            ) : (
+              <p className="text-gray-600">No financial projections available yet.</p>
+            )}
+          </ScaleIn>
           );
-          
-        case 'investorFaq':
+      case 'fundingRequest':
           return (
-            <div className="space-y-4">
-              {sectionContent.map((faq: any, index: number) => (
-                <div key={index} className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">{faq.question}</h4>
-                  <p className="text-sm text-gray-600">{faq.answer}</p>
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Funding Request & Use of Funds</h4>
+            <p className="text-gray-700 whitespace-pre-wrap">{data.fundingRequest}</p>
+            {data.investorFaq && data.investorFaq.length > 0 && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h5 className="font-medium text-md mb-2">Investor FAQs:</h5>
+                {data.investorFaq.map((faq: any, idx: number) => (
+                  <div key={idx} className="mb-3">
+                    <p className="font-medium text-gray-800">Q: {faq.question}</p>
+                    <p className="text-gray-700">A: {faq.answer}</p>
                 </div>
               ))}
             </div>
+            )}
+          </ScaleIn>
           );
-          
-        case 'pitchDeck':
+      case 'pitchDeckOutline':
           return (
-            <div className="space-y-6">
-              {sectionContent.slides.map((slide: any, index: number) => (
-                <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="bg-gray-50 p-3 border-b border-gray-200 font-medium text-gray-900">
-                    Slide {index + 1}: {slide.title}
-                  </div>
-                  <div className="p-4">
-                    <div className="mb-4">
-                      <div className="whitespace-pre-line text-sm text-gray-700">
-                        {slide.content}
-                      </div>
-                    </div>
-                    <div className="bg-indigo-50 p-3 rounded-md">
-                      <div className="text-xs text-gray-500 mb-1">Visual Element:</div>
-                      <div className="text-sm text-indigo-700">{slide.visualDescription}</div>
-                    </div>
-                  </div>
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Pitch Deck Outline</h4>
+            {data.pitchDeck && data.pitchDeck.slides && data.pitchDeck.slides.length > 0 ? (
+              <div className="space-y-4">
+                {data.pitchDeck.slides.map((slide: any, idx: number) => (
+                  <div key={idx} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <h5 className="font-semibold text-md text-blue-700 mb-1">Slide {idx + 1}: {slide.title}</h5>
+                    <p className="text-gray-700 whitespace-pre-wrap mb-2">{slide.content}</p>
+                    <p className="text-gray-600 text-sm italic">Visual: {slide.visualDescription}</p>
                 </div>
               ))}
             </div>
+            ) : (
+              <p className="text-gray-600">No pitch deck outline generated yet.</p>
+            )}
+          </ScaleIn>
           );
-          
         case 'visualElements':
           return (
+          <ScaleIn>
+            <h4 className="font-semibold text-lg mb-2">Visual Elements & Branding</h4>
+            {data.visualElements ? (
             <div className="space-y-4">
-              <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Brand Colors</h4>
-                <ColorPalette colors={sectionContent.brandColors} />
+                {data.visualElements.brandColors && data.visualElements.brandColors.length > 0 && (
+                  <div>
+                    <h5 className="font-medium text-md mb-2">Brand Colors:</h5>
+                    <ColorPalette colors={data.visualElements.brandColors} />
               </div>
-              
-              <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Logo Concept</h4>
-                <p className="text-sm text-gray-600">{sectionContent.logoDescription}</p>
+                )}
+                {data.visualElements.logoDescription && (
+                  <div>
+                    <h5 className="font-medium text-md mb-2">Logo Concept:</h5>
+                    <p className="text-gray-700 whitespace-pre-wrap">{data.visualElements.logoDescription}</p>
               </div>
-              
-              <div className="p-4 bg-white shadow-sm border border-gray-200 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Key Visual Elements</h4>
-                <ul className="space-y-1">
-                  {sectionContent.keyVisualElements.map((elem: string, idx: number) => (
-                    <li key={idx} className="flex items-start">
-                      <span className="text-amber-500 mr-2">•</span>
-                      <span className="text-sm text-gray-700">{elem}</span>
-                    </li>
+                )}
+                {data.visualElements.keyVisualElements && data.visualElements.keyVisualElements.length > 0 && (
+                  <div>
+                    <h5 className="font-medium text-md mb-2">Key Visual Elements:</h5>
+                    <ul className="list-disc list-inside text-gray-700">
+                      {data.visualElements.keyVisualElements.map((element: string, idx: number) => (
+                        <li key={idx}>{element}</li>
                   ))}
                 </ul>
+                  </div>
+                )}
               </div>
-            </div>
+            ) : (
+              <p className="text-gray-600">No visual elements generated yet.</p>
+            )}
+          </ScaleIn>
           );
+      default:
+        return <p>Select a section to view content.</p>;
+    }
+  };
           
-        case 'financialProjections':
+  const renderContent = () => {
+    if (status === 'running') {
+      return <CardSkeleton title="Pitch Document" icon={<Presentation />} color="blue" />;
+    } else if (status === 'error') {
         return (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Period
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Projections
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    Year 1
-                  </td>
-                  <td className="px-6 py-4 whitespace-pre-wrap text-sm text-gray-500">
-                    {sectionContent?.year1 || 'No data available'}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    Year 2
-                  </td>
-                  <td className="px-6 py-4 whitespace-pre-wrap text-sm text-gray-500">
-                    {sectionContent?.year2 || 'No data available'}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    Year 3
-                  </td>
-                  <td className="px-6 py-4 whitespace-pre-wrap text-sm text-gray-500">
-                    {sectionContent?.year3 || 'No data available'}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div className="text-center p-6">
+          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-red-700 mb-2">Error Generating Pitch Document</h3>
+          <p className="text-gray-600 mb-4">We encountered an issue while generating the pitch document.</p>
+          {error && <p className="text-red-500 text-sm mb-4">Details: {error.toString()}</p>}
+          <AnimatedButton
+            onClick={() => triggerPitchAgent(startupId, 'Provide startup idea here if needed')}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
+          >
+            Retry Generation
+          </AnimatedButton>
           </div>
         );
-
-        default:
+    } else if (status === 'completed' && isDataValid) {
       return (
-        <div className="whitespace-pre-line text-gray-700">
-          {sectionContent || 'No data available for this section'}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeSection}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeSection ? getSectionContent(activeSection) : <p className="text-gray-600">Select a section from the left to view pitch details.</p>}
+          </motion.div>
+        </AnimatePresence>
+      );
+    } else {
+      return (
+        <div className="text-center p-6">
+          <Presentation size={48} className="text-blue-500 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Generate Your Pitch Document</h3>
+          <p className="text-gray-600 mb-4">Click the button below to generate a comprehensive investor pitch document for your startup idea.</p>
+          {error && <p className="text-red-500 text-sm mb-4">Error: {error.toString()}</p>}
+          <AnimatedButton
+            onClick={() => triggerPitchAgent(startupId, 'Provide startup idea here if needed')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            Generate Pitch Document
+          </AnimatedButton>
         </div>
       );
-      }
-    } catch (error) {
-      console.error('Error rendering content:', error);
-      return <div className="text-red-500">Error displaying content. Please try again.</div>;
     }
   };
 
   return (
-    <ScaleIn>
-      <motion.div 
-        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div className="border-b border-gray-200 p-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mr-3">
-              <Presentation className="w-4 h-4 text-orange-600" />
-            </div>
-            <h3 className="font-medium text-gray-900">Investor Pitch Document</h3>
-          </div>
-          <div className="flex gap-2">
-            <button
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden h-full flex flex-col">
+      <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <Presentation className="text-blue-500" size={24} />
+          Pitch Document
+        </h2>
+        <div className="flex space-x-2">
+          {(status === 'completed' && isDataValid) && (
+            <>
+              <AnimatedButton
+                onClick={handleExportPitch}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                <Download size={16} /> Export PDF
+              </AnimatedButton>
+              <AnimatedButton
               onClick={handleExportPitchAsWord}
-              disabled={!isDataValid}
-              className={`px-3 py-1.5 flex items-center gap-1 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
-                isDataValid 
-                  ? "bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 hover:from-blue-200 hover:to-indigo-200" 
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              }`}
-              title="Download as Word document"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
             >
-              <FileText size={16} />
-              Word
-            </button>
-          <button
-            onClick={handleExportPitch}
-            disabled={!isDataValid}
-            className={`px-3 py-1.5 flex items-center gap-1 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all ${
-              isDataValid 
-                ? "bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 hover:from-orange-200 hover:to-amber-200" 
-                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            }`}
-              title="Download as PDF"
-          >
-            <Download size={16} />
-              PDF
-          </button>
-          </div>
+                <FileText size={16} /> Export Word
+              </AnimatedButton>
+            </>
+          )}
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 h-[600px] max-h-[600px]">
-          {/* Sidebar with sections */}
-          <div className="border-r border-gray-200 overflow-y-auto p-2 bg-gray-50">
-            <nav className="space-y-1">
-              {sections.map((section) => (
+      </div>
+      <div className="flex flex-col md:flex-row flex-grow">
+        <nav className="flex-shrink-0 w-full md:w-48 bg-gray-50 p-4 border-r border-gray-200">
+          <ul className="space-y-2">
+            {[
+              { id: 'elevatorPitch', label: 'Elevator Pitch', icon: Zap },
+              { id: 'executiveSummary', label: 'Executive Summary', icon: FileText },
+              { id: 'problemStatement', label: 'Problem Statement', icon: AlertCircle },
+              { id: 'solution', label: 'Solution', icon: Zap },
+              { id: 'marketOpportunity', label: 'Market Opportunity', icon: BarChart },
+              { id: 'businessModel', label: 'Business Model', icon: PieChart },
+              { id: 'competitiveAnalysis', label: 'Competitive Analysis', icon: Users },
+              { id: 'traction', label: 'Traction & Milestones', icon: TrendingUp },
+              { id: 'teamOverview', label: 'Team Overview', icon: Users },
+              { id: 'financialProjections', label: 'Financial Projections', icon: BarChart },
+              { id: 'fundingRequest', label: 'Funding Request', icon: FileQuestion },
+              { id: 'pitchDeckOutline', label: 'Pitch Deck Outline', icon: Layout },
+              { id: 'visualElements', label: 'Visual Elements', icon: Palette },
+            ].map((section) => (
+              <li key={section.id}>
                 <button
-                  key={section.id}
                   onClick={() => setActiveSection(section.id)}
-                  className={`flex items-center gap-2 w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                    activeSection === section.id 
-                      ? 'bg-gradient-to-r from-orange-100 to-amber-50 text-orange-800 font-medium' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`flex items-center w-full px-3 py-2 rounded-md text-sm font-medium 
+                    ${activeSection === section.id ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-100'}
+                  `}
                 >
-                  {section.icon}
-                  <span>{section.label}</span>
+                  <section.icon size={18} className="mr-2" />
+                  {section.label}
+                  <ChevronRight size={16} className="ml-auto" />
                 </button>
+              </li>
               ))}
+          </ul>
             </nav>
-          </div>
-          
-          {/* Content area */}
-          <div className="col-span-2 p-5 overflow-y-auto">
-            <div className="prose prose-sm max-w-none">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-100">
-                {sections.find(s => s.id === activeSection)?.label || 'Section'}
-              </h3>
-              
+        <div className="p-6 flex-grow overflow-y-auto custom-scrollbar">
               {renderContent()}
             </div>
           </div>
         </div>
-      </motion.div>
-    </ScaleIn>
   );
 };
 

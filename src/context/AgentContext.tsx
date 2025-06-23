@@ -1,12 +1,35 @@
 import React, { createContext, useContext, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import openAIService, { ResearchData, BusinessPlanData, ValidationData, MVPFeatureData, PitchDocumentData, InvestorInsightsData } from '../services/openAIService';
+import openAIService, { 
+  ResearchData, 
+  BusinessPlanData, 
+  ValidationData, 
+  MVPFeatureData, 
+  PitchDocumentData, 
+  InvestorInsightsData, 
+  RunwayAnalysisData,
+  GrowthOpportunityData,
+  InvestorStrategyData,
+  ProductTeamHealthData,
+  MilestoneKPIData,
+  FeaturePrioritizationData,
+  InstantPrototypingData,
+  TechStackOptimizationData,
+  TestSuiteGenerationData,
+  PairProgrammingData,
+  MVPToScaleRoadmapData,
+  CommunityFeedbackData,
+  ComplianceRiskCheckData
+} from '../services/openAIService';
 
-// Mock agent data for the MVP
-// In a real implementation, this would be replaced with actual API calls to backend services
 
 // Types
-type AgentType = 'research' | 'writer' | 'validator' | 'builder' | 'pitch' | 'investor';
+export type AgentType = 
+  'research' | 'writer' | 'validator' | 'builder' | 'pitch' | 'investor' | 
+  'runway' | 'growth' | 'investorStrategy' | 'productTeamHealth' | 'milestoneKPI' |
+  'featurePrioritization' | 'instantPrototyping' | 'techStackOptimization' | 'testSuiteGeneration' |
+  'pairProgramming' | 'mvpToScaleRoadmap' | 'communityFeedback' | 'complianceRiskCheck';
+
 type AgentStatus = 'idle' | 'running' | 'completed' | 'error';
 type LogType = 'info' | 'success' | 'error' | 'thinking' | 'warning';
 
@@ -29,6 +52,19 @@ interface AgentContextType {
   triggerBuilderAgent: (startupId: string, idea: string) => Promise<MVPFeatureData>;
   triggerPitchAgent: (startupId: string, idea: string) => Promise<PitchDocumentData>;
   triggerInvestorAgent: (startupId: string, idea: string) => Promise<InvestorInsightsData>;
+  triggerRunwayAgent: (startupId: string, idea: string, startupName: string) => Promise<RunwayAnalysisData>;
+  triggerGrowthAgent: (startupId: string, idea: string, startupName: string) => Promise<GrowthOpportunityData>;
+  triggerInvestorStrategyAgent: (startupId: string, idea: string, startupName: string) => Promise<InvestorStrategyData>;
+  triggerProductTeamHealthAgent: (startupId: string, idea: string, startupName: string) => Promise<ProductTeamHealthData>;
+  triggerMilestoneKPIAgent: (startupId: string, idea: string, startupName: string) => Promise<MilestoneKPIData>;
+  triggerFeaturePrioritizationAgent: (startupId: string, idea: string, backlog: string) => Promise<FeaturePrioritizationData>;
+  triggerInstantPrototypingAgent: (startupId: string, idea: string, featureDescriptions: string) => Promise<InstantPrototypingData>;
+  triggerTechStackOptimizationAgent: (startupId: string, idea: string, currentStack: string) => Promise<TechStackOptimizationData>;
+  triggerTestSuiteGenerationAgent: (startupId: string, idea: string, featureDetails: string) => Promise<TestSuiteGenerationData>;
+  triggerPairProgrammingAgent: (startupId: string, idea: string, userStory: string) => Promise<PairProgrammingData>;
+  triggerMVPToScaleRoadmapAgent: (startupId: string, idea: string, mvpDescription: string) => Promise<MVPToScaleRoadmapData>;
+  triggerCommunityFeedbackAgent: (startupId: string, idea: string, rawFeedback: string) => Promise<CommunityFeedbackData>;
+  triggerComplianceRiskCheckAgent: (startupId: string, idea: string, productPlan: string, industry: string) => Promise<ComplianceRiskCheckData>;
 }
 
 const AgentContext = createContext<AgentContextType | undefined>(undefined);
@@ -49,6 +85,19 @@ export const AgentContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
     builder: 'idle',
     pitch: 'idle',
     investor: 'idle',
+    runway: 'idle',
+    growth: 'idle',
+    investorStrategy: 'idle',
+    productTeamHealth: 'idle',
+    milestoneKPI: 'idle',
+    featurePrioritization: 'idle',
+    instantPrototyping: 'idle',
+    techStackOptimization: 'idle',
+    testSuiteGeneration: 'idle',
+    pairProgramming: 'idle',
+    mvpToScaleRoadmap: 'idle',
+    communityFeedback: 'idle',
+    complianceRiskCheck: 'idle',
   });
   
   const [agentData, setAgentData] = useState<Record<AgentType, any>>({
@@ -58,6 +107,19 @@ export const AgentContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
     builder: null,
     pitch: null,
     investor: null,
+    runway: null,
+    growth: null,
+    investorStrategy: null,
+    productTeamHealth: null,
+    milestoneKPI: null,
+    featurePrioritization: null,
+    instantPrototyping: null,
+    techStackOptimization: null,
+    testSuiteGeneration: null,
+    pairProgramming: null,
+    mvpToScaleRoadmap: null,
+    communityFeedback: null,
+    complianceRiskCheck: null,
   });
   
   const [agentErrors, setAgentErrors] = useState<Record<AgentType, Error | string | null>>({
@@ -67,6 +129,19 @@ export const AgentContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
     builder: null,
     pitch: null,
     investor: null,
+    runway: null,
+    growth: null,
+    investorStrategy: null,
+    productTeamHealth: null,
+    milestoneKPI: null,
+    featurePrioritization: null,
+    instantPrototyping: null,
+    techStackOptimization: null,
+    testSuiteGeneration: null,
+    pairProgramming: null,
+    mvpToScaleRoadmap: null,
+    communityFeedback: null,
+    complianceRiskCheck: null,
   });
   
   const [agentLogs, setAgentLogs] = useState<AgentLog[]>([]);
@@ -179,23 +254,20 @@ export const AgentContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const triggerBuilderAgent = async (startupId: string, idea: string) => {
     try {
       setAgentStatus(prev => ({ ...prev, builder: 'running' }));
-      addLog('builder', `Starting MVP planning for "${idea}"`, 'info');
+      addLog('builder', `Starting MVP design for "${idea}"`, 'info');
       
       // Show thinking state
-      addLog('builder', 'Defining core features and technical requirements...', 'thinking');
+      addLog('builder', 'Generating core features and technical stack...', 'thinking');
       
       // Call OpenAI API for MVP features
-      const mvpData = await openAIService.designMVPFeatures(idea);
-      
-      // Log the builder data to help with debugging
-      console.log('Setting builder data:', mvpData);
+      const mvpFeatureData = await openAIService.designMVPFeatures(idea);
       
       // Update agent data with response
-      setAgentData(prev => ({ ...prev, builder: mvpData }));
+      setAgentData(prev => ({ ...prev, builder: mvpFeatureData }));
       setAgentStatus(prev => ({ ...prev, builder: 'completed' }));
-      addLog('builder', 'MVP plan and features defined successfully', 'success');
+      addLog('builder', 'MVP design completed successfully', 'success');
       
-      return mvpData;
+      return mvpFeatureData;
     } catch (error) {
       console.error('Builder agent error:', error);
       setAgentStatus(prev => ({ ...prev, builder: 'error' }));
@@ -207,104 +279,285 @@ export const AgentContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
   
   // Pitch agent execution
   const triggerPitchAgent = async (startupId: string, idea: string) => {
-    try {
       setAgentStatus(prev => ({ ...prev, pitch: 'running' }));
-      addLog('pitch', `Starting pitch document creation for "${idea}"`, 'info');
-      
-      // Show thinking state
-      addLog('pitch', 'Analyzing market trends and crafting compelling narrative...', 'thinking');
-      
-      // Call OpenAI API for pitch document
+    addLog('pitch', `Generating pitch document for "${idea}"...`, 'thinking');
+    try {
       const pitchData = await openAIService.generatePitchDocument(idea);
-      
-      // Validate the returned data
-      if (!pitchData) {
-        throw new Error('No pitch document data returned from the API');
-      }
-      
-      // Log the received data keys for debugging
-      addLog('pitch', `Received pitch document with ${Object.keys(pitchData).length} sections`, 'info');
-      
-      // Specifically check financial projections
-      if (!pitchData.financialProjections) {
-        addLog('pitch', 'Warning: Financial projections missing or invalid', 'warning');
-      } else {
-        addLog('pitch', 'Financial projections data validated successfully', 'success');
-      }
-      
-      // Update agent data with response
       setAgentData(prev => ({ ...prev, pitch: pitchData }));
       setAgentStatus(prev => ({ ...prev, pitch: 'completed' }));
-      addLog('pitch', 'Pitch document created successfully', 'success');
-      
+      addLog('pitch', 'Pitch document generation complete.', 'success');
       return pitchData;
     } catch (error) {
-      console.error('Pitch agent error:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setAgentErrors(prev => ({ ...prev, pitch: errorMessage }));
       setAgentStatus(prev => ({ ...prev, pitch: 'error' }));
-      setAgentErrors(prev => ({ ...prev, pitch: error instanceof Error ? error : String(error) }));
-      
-      // Provide more detailed error information
-      const errorMessage = error instanceof Error 
-        ? `Error: ${error.message}` 
-        : 'Unknown error occurred while generating pitch document';
-      addLog('pitch', errorMessage, 'error');
-      
-      // Add a helpful suggestion
-      addLog('pitch', 'Try providing a more detailed startup description or try again later', 'info');
-      
+      addLog('pitch', `Error in pitch document generation: ${errorMessage}`, 'error');
       throw error;
     }
   };
-  
-  // Investor agent execution
+
   const triggerInvestorAgent = async (startupId: string, idea: string) => {
+    setAgentStatus(prev => ({ ...prev, investor: 'running' }));
+    addLog('investor', `Generating investor insights for "${idea}"...`, 'thinking');
     try {
-      setAgentStatus(prev => ({ ...prev, investor: 'running' }));
-      addLog('investor', `Starting investor insights generation for "${idea}"`, 'info');
-      
-      // Show thinking state
-      addLog('investor', 'Analyzing investor landscape and matching potential VCs...', 'thinking');
-      
-      // Get pitch data if available to provide context
+      // It might need pitch data, ensure it runs after pitch is completed
       const pitchData = agentData.pitch;
-      
-      // Call OpenAI API for investor insights
-      const investorData = await openAIService.generateInvestorInsights(idea, pitchData);
-      
-      // Validate the returned data
-      if (!investorData) {
-        throw new Error('No investor insights data returned from the API');
-      }
-      
-      // Log the received data
-      addLog('investor', `Received investor insights with ${investorData.vcMatches.length} VC matches`, 'info');
-      
-      // Update agent data with response
-      setAgentData(prev => ({ ...prev, investor: investorData }));
+      const data = await openAIService.generateInvestorInsights(idea, pitchData);
+      setAgentData(prev => ({ ...prev, investor: data }));
       setAgentStatus(prev => ({ ...prev, investor: 'completed' }));
-      addLog('investor', 'Investor insights generated successfully', 'success');
-      
-      return investorData;
+      addLog('investor', 'Investor insights generation complete.', 'success');
+      return data;
     } catch (error) {
-      console.error('Investor agent error:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setAgentErrors(prev => ({ ...prev, investor: errorMessage }));
       setAgentStatus(prev => ({ ...prev, investor: 'error' }));
-      setAgentErrors(prev => ({ ...prev, investor: error instanceof Error ? error : String(error) }));
-      
-      // Provide more detailed error information
-      const errorMessage = error instanceof Error 
-        ? `Error: ${error.message}` 
-        : 'Unknown error occurred while generating investor insights';
-      addLog('investor', errorMessage, 'error');
-      
-      // Add a helpful suggestion
-      addLog('investor', 'Try providing a more detailed startup description or try again later', 'info');
-      
+      addLog('investor', `Error in investor insights generation: ${errorMessage}`, 'error');
       throw error;
     }
   };
   
-  return (
-    <AgentContext.Provider value={{
+    // New: Runway Agent execution
+    const triggerRunwayAgent = async (startupId: string, idea: string, startupName: string) => {
+      setAgentStatus(prev => ({ ...prev, runway: 'running' }));
+      addLog('runway', `Starting runway analysis for "${startupName}"...`, 'thinking');
+      try {
+        const data = await openAIService.generateRunwayAnalysis(idea, startupName);
+        setAgentData(prev => ({ ...prev, runway: data }));
+        setAgentStatus(prev => ({ ...prev, runway: 'completed' }));
+        addLog('runway', 'Runway analysis complete.', 'success');
+        return data;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        setAgentErrors(prev => ({ ...prev, runway: errorMessage }));
+        setAgentStatus(prev => ({ ...prev, runway: 'error' }));
+        addLog('runway', `Error in runway analysis: ${errorMessage}`, 'error');
+        throw error;
+      }
+    };
+  
+    // New: Growth Agent execution
+    const triggerGrowthAgent = async (startupId: string, idea: string, startupName: string) => {
+      setAgentStatus(prev => ({ ...prev, growth: 'running' }));
+      addLog('growth', `Identifying growth opportunities for "${startupName}"...`, 'thinking');
+      try {
+        const data = await openAIService.generateGrowthOpportunity(idea, startupName);
+        setAgentData(prev => ({ ...prev, growth: data }));
+        setAgentStatus(prev => ({ ...prev, growth: 'completed' }));
+        addLog('growth', 'Growth opportunity analysis complete.', 'success');
+        return data;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        setAgentErrors(prev => ({ ...prev, growth: errorMessage }));
+        setAgentStatus(prev => ({ ...prev, growth: 'error' }));
+        addLog('growth', `Error in growth analysis: ${errorMessage}`, 'error');
+        throw error;
+      }
+    };
+  
+    // New: Investor Strategy Agent execution
+    const triggerInvestorStrategyAgent = async (startupId: string, idea: string, startupName: string) => {
+      setAgentStatus(prev => ({ ...prev, investorStrategy: 'running' }));
+      addLog('investorStrategy', `Developing investor strategy for "${startupName}"...`, 'thinking');
+      try {
+        const data = await openAIService.generateInvestorStrategy(idea, startupName);
+        setAgentData(prev => ({ ...prev, investorStrategy: data }));
+        setAgentStatus(prev => ({ ...prev, investorStrategy: 'completed' }));
+        addLog('investorStrategy', 'Investor strategy development complete.', 'success');
+        return data;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        setAgentErrors(prev => ({ ...prev, investorStrategy: errorMessage }));
+        setAgentStatus(prev => ({ ...prev, investorStrategy: 'error' }));
+        addLog('investorStrategy', `Error in investor strategy: ${errorMessage}`, 'error');
+        throw error;
+      }
+    };
+  
+    // New: Product & Team Health Agent execution
+    const triggerProductTeamHealthAgent = async (startupId: string, idea: string, startupName: string) => {
+      setAgentStatus(prev => ({ ...prev, productTeamHealth: 'running' }));
+      addLog('productTeamHealth', `Assessing product & team health for "${startupName}"...`, 'thinking');
+      try {
+        const data = await openAIService.generateProductTeamHealth(idea, startupName);
+        setAgentData(prev => ({ ...prev, productTeamHealth: data }));
+        setAgentStatus(prev => ({ ...prev, productTeamHealth: 'completed' }));
+        addLog('productTeamHealth', 'Product & team health assessment complete.', 'success');
+        return data;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        setAgentErrors(prev => ({ ...prev, productTeamHealth: errorMessage }));
+        setAgentStatus(prev => ({ ...prev, productTeamHealth: 'error' }));
+        addLog('productTeamHealth', `Error in product & team health assessment: ${errorMessage}`, 'error');
+        throw error;
+      }
+    };
+  
+    // New: Milestone & KPI Agent execution
+    const triggerMilestoneKPIAgent = async (startupId: string, idea: string, startupName: string) => {
+      setAgentStatus(prev => ({ ...prev, milestoneKPI: 'running' }));
+      addLog('milestoneKPI', `Defining milestones & KPIs for "${startupName}"...`, 'thinking');
+      try {
+        const data = await openAIService.generateMilestoneKPI(idea, startupName);
+        setAgentData(prev => ({ ...prev, milestoneKPI: data }));
+        setAgentStatus(prev => ({ ...prev, milestoneKPI: 'completed' }));
+        addLog('milestoneKPI', 'Milestone & KPI definition complete.', 'success');
+        return data;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        setAgentErrors(prev => ({ ...prev, milestoneKPI: errorMessage }));
+        setAgentStatus(prev => ({ ...prev, milestoneKPI: 'error' }));
+        addLog('milestoneKPI', `Error in milestone & KPI definition: ${errorMessage}`, 'error');
+        throw error;
+      }
+    };
+
+    // New agents for 'build' goal
+    const triggerFeaturePrioritizationAgent = async (startupId: string, idea: string, backlog: string) => {
+        setAgentStatus(prev => ({ ...prev, featurePrioritization: 'running' }));
+        addLog('featurePrioritization', `Prioritizing features for "${idea}"...`, 'thinking');
+        try {
+            const data = await openAIService.generateFeaturePrioritization(idea, backlog);
+            setAgentData(prev => ({ ...prev, featurePrioritization: data }));
+            setAgentStatus(prev => ({ ...prev, featurePrioritization: 'completed' }));
+            addLog('featurePrioritization', 'Feature prioritization complete.', 'success');
+            return data;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            setAgentErrors(prev => ({ ...prev, featurePrioritization: errorMessage }));
+            setAgentStatus(prev => ({ ...prev, featurePrioritization: 'error' }));
+            addLog('featurePrioritization', `Error in feature prioritization: ${errorMessage}`, 'error');
+            throw error;
+        }
+    };
+    
+    const triggerInstantPrototypingAgent = async (startupId: string, idea: string, featureDescriptions: string) => {
+        setAgentStatus(prev => ({ ...prev, instantPrototyping: 'running' }));
+        addLog('instantPrototyping', `Generating prototypes for "${idea}"...`, 'thinking');
+        try {
+            const data = await openAIService.generateInstantPrototyping(idea, featureDescriptions);
+            setAgentData(prev => ({ ...prev, instantPrototyping: data }));
+            setAgentStatus(prev => ({ ...prev, instantPrototyping: 'completed' }));
+            addLog('instantPrototyping', 'Prototyping complete.', 'success');
+            return data;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            setAgentErrors(prev => ({ ...prev, instantPrototyping: errorMessage }));
+            setAgentStatus(prev => ({ ...prev, instantPrototyping: 'error' }));
+            addLog('instantPrototyping', `Error in prototyping: ${errorMessage}`, 'error');
+            throw error;
+        }
+    };
+
+    const triggerTechStackOptimizationAgent = async (startupId: string, idea: string, currentStack: string) => {
+        setAgentStatus(prev => ({ ...prev, techStackOptimization: 'running' }));
+        addLog('techStackOptimization', `Optimizing tech stack for "${idea}"...`, 'thinking');
+        try {
+            const data = await openAIService.generateTechStackOptimization(idea, currentStack);
+            setAgentData(prev => ({ ...prev, techStackOptimization: data }));
+            setAgentStatus(prev => ({ ...prev, techStackOptimization: 'completed' }));
+            addLog('techStackOptimization', 'Tech stack optimization complete.', 'success');
+            return data;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            setAgentErrors(prev => ({ ...prev, techStackOptimization: errorMessage }));
+            setAgentStatus(prev => ({ ...prev, techStackOptimization: 'error' }));
+            addLog('techStackOptimization', `Error in tech stack optimization: ${errorMessage}`, 'error');
+            throw error;
+        }
+    };
+
+    const triggerTestSuiteGenerationAgent = async (startupId: string, idea: string, featureDetails: string) => {
+        setAgentStatus(prev => ({ ...prev, testSuiteGeneration: 'running' }));
+        addLog('testSuiteGeneration', `Generating test suite for "${idea}"...`, 'thinking');
+        try {
+            const data = await openAIService.generateTestSuite(idea, featureDetails);
+            setAgentData(prev => ({ ...prev, testSuiteGeneration: data }));
+            setAgentStatus(prev => ({ ...prev, testSuiteGeneration: 'completed' }));
+            addLog('testSuiteGeneration', 'Test suite generation complete.', 'success');
+            return data;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            setAgentErrors(prev => ({ ...prev, testSuiteGeneration: errorMessage }));
+            setAgentStatus(prev => ({ ...prev, testSuiteGeneration: 'error' }));
+            addLog('testSuiteGeneration', `Error in test suite generation: ${errorMessage}`, 'error');
+            throw error;
+        }
+    };
+
+    const triggerPairProgrammingAgent = async (startupId: string, idea: string, userStory: string) => {
+        setAgentStatus(prev => ({ ...prev, pairProgramming: 'running' }));
+        addLog('pairProgramming', `Starting AI pair programming for "${idea}"...`, 'thinking');
+        try {
+            const data = await openAIService.generatePairProgramming(idea, userStory);
+            setAgentData(prev => ({ ...prev, pairProgramming: data }));
+            setAgentStatus(prev => ({ ...prev, pairProgramming: 'completed' }));
+            addLog('pairProgramming', 'AI pair programming session complete.', 'success');
+            return data;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            setAgentErrors(prev => ({ ...prev, pairProgramming: errorMessage }));
+            setAgentStatus(prev => ({ ...prev, pairProgramming: 'error' }));
+            addLog('pairProgramming', `Error in AI pair programming: ${errorMessage}`, 'error');
+            throw error;
+        }
+    };
+
+    const triggerMVPToScaleRoadmapAgent = async (startupId: string, idea: string, mvpDescription: string) => {
+        setAgentStatus(prev => ({ ...prev, mvpToScaleRoadmap: 'running' }));
+        addLog('mvpToScaleRoadmap', `Generating MVP-to-Scale roadmap for "${idea}"...`, 'thinking');
+        try {
+            const data = await openAIService.generateMVPToScaleRoadmap(idea, mvpDescription);
+            setAgentData(prev => ({ ...prev, mvpToScaleRoadmap: data }));
+            setAgentStatus(prev => ({ ...prev, mvpToScaleRoadmap: 'completed' }));
+            addLog('mvpToScaleRoadmap', 'MVP-to-Scale roadmap generation complete.', 'success');
+            return data;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            setAgentErrors(prev => ({ ...prev, mvpToScaleRoadmap: errorMessage }));
+            setAgentStatus(prev => ({ ...prev, mvpToScaleRoadmap: 'error' }));
+            addLog('mvpToScaleRoadmap', `Error in MVP-to-Scale roadmap generation: ${errorMessage}`, 'error');
+            throw error;
+        }
+    };
+
+    const triggerCommunityFeedbackAgent = async (startupId: string, idea: string, rawFeedback: string) => {
+        setAgentStatus(prev => ({ ...prev, communityFeedback: 'running' }));
+        addLog('communityFeedback', `Analyzing community feedback for "${idea}"...`, 'thinking');
+        try {
+            const data = await openAIService.generateCommunityFeedback(idea, rawFeedback);
+            setAgentData(prev => ({ ...prev, communityFeedback: data }));
+            setAgentStatus(prev => ({ ...prev, communityFeedback: 'completed' }));
+            addLog('communityFeedback', 'Community feedback analysis complete.', 'success');
+            return data;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            setAgentErrors(prev => ({ ...prev, communityFeedback: errorMessage }));
+            setAgentStatus(prev => ({ ...prev, communityFeedback: 'error' }));
+            addLog('communityFeedback', `Error in community feedback analysis: ${errorMessage}`, 'error');
+            throw error;
+        }
+    };
+
+    const triggerComplianceRiskCheckAgent = async (startupId: string, idea: string, productPlan: string, industry: string) => {
+        setAgentStatus(prev => ({ ...prev, complianceRiskCheck: 'running' }));
+        addLog('complianceRiskCheck', `Running compliance and risk check for "${idea}"...`, 'thinking');
+        try {
+            const data = await openAIService.generateComplianceRiskCheck(idea, productPlan, industry);
+            setAgentData(prev => ({ ...prev, complianceRiskCheck: data }));
+            setAgentStatus(prev => ({ ...prev, complianceRiskCheck: 'completed' }));
+            addLog('complianceRiskCheck', 'Compliance and risk check complete.', 'success');
+            return data;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            setAgentErrors(prev => ({ ...prev, complianceRiskCheck: errorMessage }));
+            setAgentStatus(prev => ({ ...prev, complianceRiskCheck: 'error' }));
+            addLog('complianceRiskCheck', `Error in compliance and risk check: ${errorMessage}`, 'error');
+            throw error;
+        }
+    };
+
+
+  const value = {
     agentStatus,
     agentData,
       agentErrors,
@@ -314,9 +567,21 @@ export const AgentContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
     triggerValidatorAgent,
     triggerBuilderAgent,
     triggerPitchAgent,
-      triggerInvestorAgent,
-    }}>
-      {children}
-    </AgentContext.Provider>
-  );
+    triggerInvestorAgent,
+    triggerRunwayAgent,
+    triggerGrowthAgent,
+    triggerInvestorStrategyAgent,
+    triggerProductTeamHealthAgent,
+    triggerMilestoneKPIAgent,
+    triggerFeaturePrioritizationAgent,
+    triggerInstantPrototypingAgent,
+    triggerTechStackOptimizationAgent,
+    triggerTestSuiteGenerationAgent,
+    triggerPairProgrammingAgent,
+    triggerMVPToScaleRoadmapAgent,
+    triggerCommunityFeedbackAgent,
+    triggerComplianceRiskCheckAgent
+  };
+
+  return <AgentContext.Provider value={value}>{children}</AgentContext.Provider>;
 };

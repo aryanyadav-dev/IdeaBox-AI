@@ -5,7 +5,7 @@ interface Startup {
   id: string;
   name: string;
   idea: string;
-  goal: 'validate' | 'build' | 'pitch';
+  goal: 'validate' | 'build' | 'pitch' | 'evaluate';
   createdAt: string;
 }
 
@@ -14,7 +14,7 @@ interface StartupContextType {
   activeStartup: Startup | null;
   setActiveStartup: (startup: Startup | null) => void;
   getStartupById: (id: string) => Startup | null;
-  createStartup: (idea: string, goal: 'validate' | 'build' | 'pitch') => string;
+  createStartup: (idea: string, goal: 'validate' | 'build' | 'pitch' | 'evaluate') => string;
   updateStartup: (id: string, data: Partial<Startup>) => void;
   deleteStartup: (id: string) => void;
 }
@@ -55,7 +55,7 @@ export const StartupContextProvider: React.FC<{ children: React.ReactNode }> = (
     return startups.find(startup => startup.id === id) || null;
   };
   
-  const createStartup = (idea: string, goal: 'validate' | 'build' | 'pitch'): string => {
+  const createStartup = (idea: string, goal: 'validate' | 'build' | 'pitch' | 'evaluate'): string => {
     // Generate a name from the idea
     const name = generateStartupName(idea);
     

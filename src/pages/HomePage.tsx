@@ -35,7 +35,7 @@ const HomePage: React.FC = () => {
   const { createStartup } = useStartupContext();
   const [startupIdea, setStartupIdea] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedGoal, setSelectedGoal] = useState<'validate' | 'build' | 'pitch' | null>(null);
+  const [selectedGoal, setSelectedGoal] = useState<'validate' | 'build' | 'pitch' | 'evaluate' | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,8 +53,14 @@ const HomePage: React.FC = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Submit button clicked.');
+    console.log('Startup Idea:', startupIdea);
+    console.log('Selected Goal:', selectedGoal);
     
-    if (!startupIdea || !selectedGoal) return;
+    if (!startupIdea || !selectedGoal) {
+      console.log('Validation failed: Startup idea or selected goal is missing.');
+      return;
+    }
     
     setIsSubmitting(true);
     
@@ -79,17 +85,17 @@ const HomePage: React.FC = () => {
   };
 
   // Map selected goal to StartupHistory format
-  const mapGoalToHistoryFormat = (goal: 'validate' | 'build' | 'pitch' | null): 'validate' | 'mvp' | 'pitch' => {
+  const mapGoalToHistoryFormat = (goal: 'validate' | 'build' | 'pitch' | 'evaluate' | null): 'validate' | 'mvp' | 'pitch' | 'evaluate' => {
     if (goal === 'build') return 'mvp';
-    if (goal === 'validate' || goal === 'pitch') return goal;
+    if (goal === 'validate' || goal === 'pitch' || goal === 'evaluate') return goal;
     return 'validate'; // Default
   };
   
   // Handle loading a previous startup idea
-  const handleLoadIdea = (idea: string, desc: string, goal: 'validate' | 'mvp' | 'pitch') => {
+  const handleLoadIdea = (idea: string, desc: string, goal: 'validate' | 'mvp' | 'pitch' | 'evaluate') => {
     setStartupIdea(idea);
     setDescription(desc);
-    setSelectedGoal(goal === 'mvp' ? 'build' : goal);
+    setSelectedGoal(goal);
     setShowHistory(false);
     
     // Scroll to top to show the loaded idea
@@ -251,55 +257,73 @@ const HomePage: React.FC = () => {
                       />
             </div>
             
-            <div>
-                      <label htmlFor="goal" className="block text-sm font-medium text-gray-700 mb-2">
-                        Project Goal
-                      </label>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div 
-                          className={`p-3 ${selectedGoal === 'validate' ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-400' : 'bg-white border-gray-200'} border rounded-lg cursor-pointer hover:shadow-sm transition-all`}
-                          onClick={() => setSelectedGoal('validate')}
-                        >
-                          <div className="flex items-center">
-                            <div className={`w-8 h-8 rounded-full ${selectedGoal === 'validate' ? 'bg-blue-100' : 'bg-gray-100'} flex items-center justify-center`}>
-                              <Target className={`h-4 w-4 ${selectedGoal === 'validate' ? 'text-blue-600' : 'text-gray-500'}`} />
-                            </div>
-                            <div className="ml-3">
-                              <h3 className="font-medium text-gray-900 text-sm">Validate</h3>
-                              <p className="text-xs text-gray-500">Market research</p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div 
-                          className={`p-3 ${selectedGoal === 'build' ? 'bg-purple-50 border-purple-200 ring-1 ring-purple-400' : 'bg-white border-gray-200'} border rounded-lg cursor-pointer hover:shadow-sm transition-all`}
-                          onClick={() => setSelectedGoal('build')}
-                  >
-                          <div className="flex items-center">
-                            <div className={`w-8 h-8 rounded-full ${selectedGoal === 'build' ? 'bg-purple-100' : 'bg-gray-100'} flex items-center justify-center`}>
-                              <Code className={`h-4 w-4 ${selectedGoal === 'build' ? 'text-purple-600' : 'text-gray-500'}`} />
-                            </div>
-                            <div className="ml-3">
-                              <h3 className="font-medium text-gray-900 text-sm">Build</h3>
-                              <p className="text-xs text-gray-500">MVP roadmap</p>
-                    </div>
-              </div>
-            </div>
-            
-                        <div 
-                          className={`p-3 ${selectedGoal === 'pitch' ? 'bg-amber-50 border-amber-200 ring-1 ring-amber-400' : 'bg-white border-gray-200'} border rounded-lg cursor-pointer hover:shadow-sm transition-all`}
-                          onClick={() => setSelectedGoal('pitch')}
-                        >
-                          <div className="flex items-center">
-                            <div className={`w-8 h-8 rounded-full ${selectedGoal === 'pitch' ? 'bg-amber-100' : 'bg-gray-100'} flex items-center justify-center`}>
-                              <Rocket className={`h-4 w-4 ${selectedGoal === 'pitch' ? 'text-amber-600' : 'text-gray-500'}`} />
-                            </div>
-                            <div className="ml-3">
-                              <h3 className="font-medium text-gray-900 text-sm">Pitch</h3>
-                              <p className="text-xs text-gray-500">Investor deck</p>
-                            </div>
-                          </div>
-                        </div>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">What is your primary goal?</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGoal('validate');
+                    console.log('Goal selected: validate');
+                  }}
+                  className={`flex items-center justify-center p-3 border rounded-lg text-sm font-medium transition-all ${
+                    selectedGoal === 'validate'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300'
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Target className="h-4 w-4 mr-2" /> Validate Idea
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGoal('build');
+                    console.log('Goal selected: build');
+                  }}
+                  className={`flex items-center justify-center p-3 border rounded-lg text-sm font-medium transition-all ${
+                    selectedGoal === 'build'
+                      ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-purple-300'
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Code className="h-4 w-4 mr-2" /> Build MVP
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGoal('pitch');
+                    console.log('Goal selected: pitch');
+                  }}
+                  className={`flex items-center justify-center p-3 border rounded-lg text-sm font-medium transition-all ${
+                    selectedGoal === 'pitch'
+                      ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Rocket className="h-4 w-4 mr-2" /> Create Pitch
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGoal('evaluate');
+                    console.log('Goal selected: evaluate');
+                  }}
+                  className={`flex items-center justify-center p-3 border rounded-lg text-sm font-medium transition-all ${
+                    selectedGoal === 'evaluate'
+                      ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-green-300'
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" /> Evaluate Existing Startup
+                </motion.button>
                       </div>
                     </div>
                     

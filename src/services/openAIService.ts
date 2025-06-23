@@ -12,20 +12,29 @@ export interface ResearchData {
 }
 
 export interface BusinessPlanData {
-  summary: string;
-  strategy: string;
-  financials: {
-    initialCosts: string;
-    revenue: string;
-    breakeven: string;
+  executiveSummary: string;
+  valueProposition: string;
+  marketAnalysis: string;
+  strategyAndExecution: string;
+  revenueModel: string;
+  financialProjections: {
+    year1Revenue: string;
+    year2Revenue: string;
+    year3Revenue: string;
+    keyAssumptions: string[];
   };
+  managementTeam: string[];
 }
 
 export interface ValidationData {
-  feedback: string[];
-  score: number;
-  strengths: string[];
-  weaknesses: string[];
+  scores: {
+    marketNeed: number; // Score out of 10
+    innovationPotential: number; // Score out of 10
+    businessViability: number; // Score out of 10
+    executionRisk: number; // Score out of 10
+  };
+  strengths: string[]; // Creative and insightful strengths
+  challenges: string[]; // Constructive and actionable challenges
 }
 
 export interface MVPFeatureData {
@@ -197,6 +206,166 @@ export interface InvestorInsightsData {
   };
 }
 
+// New Interfaces for Evaluate Goal - Input interfaces are no longer needed
+export interface RunwayAnalysisData {
+  projection: {
+    months: number;
+    cashAtEndOfRunway: string;
+  };
+  scenarios: {
+    name: string;
+    description: string;
+    impact: string;
+  }[];
+  optimizations: string[];
+}
+
+export interface GrowthOpportunityData {
+  marketSegments: {
+    name: string;
+    description: string;
+    opportunityScore: number;
+  }[];
+  upsellCrossSell: string[];
+  expansionStrategies: string[];
+  benchmarking: {
+    metric: string;
+    yourValue: string;
+    industryAverage: string;
+    topCompetitor: string;
+  }[];
+}
+
+export interface InvestorStrategyData {
+  investorMatches: {
+    name: string;
+    firm: string;
+    stage: string;
+    sector: string;
+    whyMatch: string;
+    contact: string;
+  }[];
+  fundraisingTiming: string;
+  fundraisingStrategy: string[];
+  commonQuestionsAnswers: {
+    question: string;
+    answer: string;
+  }[];
+}
+
+export interface ProductTeamHealthData {
+  productRoadmapReview: string;
+  teamStructureAnalysis: string;
+  velocityAssessment: string;
+  hiringPriorities: string[];
+  processImprovements: string[];
+  technicalDebtReduction: string[];
+}
+
+export interface MilestoneKPIData {
+  kpis: {
+    name: string;
+    target: string;
+    current: string;
+    forecast: string;
+    description: string;
+  }[];
+  milestones: {
+    name: string;
+    description: string;
+    targetDate: string;
+    status: string;
+  }[];
+  correctiveActions: string[];
+}
+
+// New Interfaces for Build Goal
+export interface FeaturePrioritizationData {
+  prioritizedFeatures: {
+    name: string;
+    description: string;
+    score: number; // 0-100
+    reasoning: string;
+  }[];
+}
+
+export interface InstantPrototypingData {
+  wireframes: {
+    name: string;
+    description: string;
+    htmlCssCode: string; // Or a URL to Figma/other tool integration
+  }[];
+  userFlows: {
+    name: string;
+    steps: string[];
+  }[];
+}
+
+export interface TechStackOptimizationData {
+  recommendations: {
+    category: string; // e.g., 'Database', 'Frontend Framework', 'CI/CD'
+    suggestion: string;
+    reasoning: string;
+    costSavingPotential?: string; // e.g., '20% reduction in hosting costs'
+  }[];
+}
+
+export interface TestSuiteGenerationData {
+  unitTests: {
+    feature: string;
+    testCases: string[]; // Code snippets or detailed descriptions
+  }[];
+  integrationTests: {
+    scenario: string;
+    testCases: string[];
+  }[];
+  e2eTests: {
+    userStory: string;
+    steps: string[]; // Steps to test, e.g., 'User logs in', 'Navigates to profile'
+  }[];
+}
+
+export interface PairProgrammingData {
+  codeSnippets: {
+    language: string;
+    description: string;
+    code: string;
+  }[];
+  pullRequestReview: string;
+  moduleScaffolding: string;
+}
+
+export interface MVPToScaleRoadmapData {
+  roadmapPhases: {
+    phaseName: string;
+    timeline: string; // e.g., 'Q1 2025 - Q2 2025'
+    keyActivities: string[];
+    hiringNeeds: string[];
+    infrastructureNeeds: string[];
+  }[];
+}
+
+export interface CommunityFeedbackData {
+  feedbackSummary: string;
+  actionableInsights: string[];
+}
+
+export interface ComplianceRiskCheckData {
+  complianceIssues: {
+    regulation: string;
+    description: string;
+    severity: string; // e.g., 'High', 'Medium', 'Low'
+    mitigationSuggestions: string[];
+  }[];
+  riskFactors: {
+    risk: string;
+    description: string;
+    impact: string; // e.g., 'Financial', 'Reputational', 'Operational'
+    likelihood: string; // e.g., 'High', 'Medium', 'Low'
+    mitigationPlan: string[];
+  }[];
+}
+
 // Configure API connection using pattern from the video
 const token = import.meta.env.VITE_OPENAI_API_KEY || "";
 const endpoint = "https://models.inference.ai.azure.com";
@@ -295,71 +464,109 @@ export async function generateMarketResearch(idea: string): Promise<ResearchData
 // Writer Agent: Create business plans
 export async function generateBusinessPlan(idea: string): Promise<BusinessPlanData> {
   try {
-    console.log('Starting business plan generation for:', idea);
-    
-    const systemPrompt = `You are a business plan expert. Create a comprehensive business plan for the startup idea provided. 
-    Format your response as a JSON object with the following keys: summary (string), strategy (string), and financials (object with 
-    initialCosts, revenue, and breakeven as strings).`;
-    
     const { text } = await generateText({
       model: client(modelName),
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Create a business plan for this startup idea: "${idea}". 
-        Provide a concise summary, business strategy, and estimated financials.
-        Return the plan in the specified JSON format.` }
-      ]
+      temperature: 0.4,
+      prompt: `
+        You are a seasoned business strategist and venture capitalist. 
+        Your task is to generate a comprehensive, actionable, and data-informed business plan for a startup idea.
+        Use your internal knowledge and high-level web search capabilities to gather relevant market data, competitor insights, and industry trends.
+
+        Startup Idea: "${idea}"
+
+        Generate a detailed business plan and provide the output as a JSON object with the following specific keys.
+        If a section is not applicable or data is not available, provide a reasoned explanation. DO NOT leave fields empty.
+
+        - "executiveSummary": A compelling one-paragraph overview of the business.
+        - "valueProposition": A clear and concise statement of the unique value the startup delivers to its target customers.
+        - "marketAnalysis": A summary of the target market, its size, growth potential, and key trends.
+        - "strategyAndExecution": An outline of the go-to-market strategy, marketing plan, and operational plan.
+        - "revenueModel": A detailed explanation of how the business will generate revenue (e.g., subscription, transaction fees, advertising). Be specific.
+        - "financialProjections": An object containing:
+          - "year1Revenue": Projected revenue for the first year.
+          - "year2Revenue": Projected revenue for the second year.
+          - "year3Revenue": Projected revenue for the third year.
+          - "keyAssumptions": A string array of the key assumptions behind the financial projections.
+        - "managementTeam": A string array listing key roles needed for success (e.g., "CEO with SaaS experience", "CTO with AI expertise").
+
+        Return ONLY the JSON object.
+      `,
     });
     
-    // Fallback structure if JSON parsing fails
-    const fallback: BusinessPlanData = {
-      summary: "A promising startup addressing market needs through innovative solutions.",
-      strategy: "Focus on niche markets initially, then expand with additional features.",
-      financials: {
-        initialCosts: "$50,000 - $100,000 for development and initial marketing",
-        revenue: "Projected $10,000 - $20,000 monthly after first year",
-        breakeven: "Expected within 18-24 months of operations"
-      }
-    };
+    console.log('Business Plan response from AI:', text);
+    const parsedData = safeJSONParse(text, {
+      executiveSummary: "No data available.",
+      valueProposition: "No data available.",
+      marketAnalysis: "No data available.",
+      strategyAndExecution: "No data available.",
+      revenueModel: "No data available.",
+      financialProjections: {
+        year1Revenue: "N/A",
+        year2Revenue: "N/A",
+        year3Revenue: "N/A",
+        keyAssumptions: ["No assumptions made."],
+      },
+      managementTeam: ["No roles defined."],
+    });
 
-    return safeJSONParse(text, fallback);
-  } catch (error: any) {
-    console.error('Writer agent error:', error);
-    throw new Error(`Business plan generation failed: ${error.message || 'Unknown error'}`);
+    return parsedData;
+  } catch (error) {
+    console.error('Error generating business plan:', error);
+    throw new Error('Failed to generate business plan from AI.');
   }
 }
 
 // Validator Agent: Validate business ideas
 export async function validateBusinessIdea(idea: string): Promise<ValidationData> {
+  // This function now uses a more sophisticated prompt to get structured validation data
   try {
-    console.log('Starting validation for:', idea);
-    
-    const systemPrompt = `You are a startup validation expert. Critically analyze the viability of the startup idea provided. 
-    Format your response as a JSON object with the following keys: feedback (array of strings), score (number from 1-10), 
-    strengths (array of strings), and weaknesses (array of strings).`;
-    
     const { text } = await generateText({
       model: client(modelName),
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Validate this startup idea: "${idea}". 
-        Provide constructive feedback, a viability score (1-10), and analyze strengths and weaknesses.
-        Return your validation analysis in the specified JSON format.` }
-      ]
-    });
-    
-    // Fallback structure if JSON parsing fails
-    const fallback: ValidationData = {
-      feedback: ["Interesting concept with potential", "Consider refining the market approach"],
-      score: 7,
-      strengths: ["Addresses a clear market need", "Scalable business model"],
-      weaknesses: ["Potential regulatory challenges", "High customer acquisition costs"]
-    };
+      temperature: 0.3,
+      prompt: `
+        You are a highly creative and critical startup analyst.
+        Your goal is to provide a sharp, insightful, and actionable validation of a startup idea.
+        Perform a quick, high-level web search in your internal knowledge to inform your analysis about the idea.
+        
+        Startup Idea: "${idea}"
 
-    return safeJSONParse(text, fallback);
-  } catch (error: any) {
-    console.error('Validator agent error:', error);
-    throw new Error(`Validation failed: ${error.message || 'Unknown error'}`);
+        Based on the idea, provide the following in a JSON object:
+        1.  "scores": An object with four keys:
+            - "marketNeed": A score from 1-10 on how strong the market need is.
+            - "innovationPotential": A score from 1-10 on how innovative and unique the idea is.
+            - "businessViability": A score from 1-10 on its potential for profitability and sustainable growth.
+            - "executionRisk": A score from 1-10 assessing the risk and difficulty of executing the idea (10 being lowest risk).
+        2.  "strengths": A string array of 3-5 key strengths. Be creative and find unique upsides. Go beyond the obvious.
+        3.  "challenges": A string array of 3-5 major challenges or weaknesses. Be constructive and offer implicit advice on how to overcome them.
+
+        Return ONLY the JSON object.
+      `,
+    });
+
+    console.log('Validation response from AI:', text);
+    const parsedData = safeJSONParse(text, {
+      scores: {
+        marketNeed: 0,
+        innovationPotential: 0,
+        businessViability: 0,
+        executionRisk: 0,
+      },
+      strengths: [],
+      challenges: [],
+    });
+
+    // Basic validation
+    if (
+      !parsedData.scores ||
+      typeof parsedData.scores.marketNeed !== 'number'
+    ) {
+      throw new Error('AI response for validation is malformed.');
+    }
+
+    return parsedData;
+  } catch (error) {
+    console.error('Error validating business idea:', error);
+    throw new Error('Failed to get validation from AI.');
   }
 }
 
@@ -1058,11 +1265,350 @@ export async function generateInvestorInsights(idea: string, pitchData?: PitchDo
   }
 }
 
+// New Agent Functions for Evaluate Goal
+export async function generateRunwayAnalysis(startupIdea: string, startupName: string): Promise<RunwayAnalysisData> {
+  try {
+    const { text } = await generateText({
+      model: client(modelName),
+      prompt: `
+        You are an expert financial analyst. Your task is to perform a detailed runway analysis for the startup "${startupName}", which is working on: "${startupIdea}".
+        
+        1.  **Research**: First, search the web for publicly available information regarding ${startupName}'s financials. Look for recent funding rounds, reported revenue, estimated monthly expenses, team size, and typical burn rates for a company of its stage and industry.
+        2.  **Estimate**: If specific data is not available, use your expertise to create reasonable, clearly stated estimates. For example, you can estimate monthly expenses based on team size and industry standards. State all assumptions you make.
+        3.  **Analyze**: Based on your research and estimations, calculate the startup's financial runway.
+        4.  **Structure Output**: Return a detailed analysis in a valid JSON object. Do not include any text outside the JSON object.
+        
+        The JSON object should conform to the following structure:
+        -   **projection**: An object detailing the estimated runway.
+            -   **months** (number): The estimated number of months until cash runs out.
+            -   **cashAtEndOfRunway** (string): A brief summary of the projected financial state at the end of the runway.
+        -   **scenarios**: An array of objects outlining potential best-case and worst-case scenarios.
+            -   **name** (string): e.g., "Achieving Profitability", "Emergency Funding Round".
+            -   **description** (string): A description of the scenario.
+            -   **impact** (string): The potential impact on the runway.
+        -   **optimizations**: An array of strings with actionable recommendations to extend the runway (e.g., "Reduce marketing spend", "Accelerate sales cycle").
+      `,
+    });
+    console.log('Raw Runway Analysis from API:', text);
+    const data = safeJSONParse(text, { projection: { months: 0, cashAtEndOfRunway: '' }, scenarios: [], optimizations: [] });
+    return validateRunwayAnalysisData(data);
+  } catch (error) {
+    console.error('Error generating runway analysis:', error);
+    throw error;
+  }
+}
+
+const validateRunwayAnalysisData = (data: any): RunwayAnalysisData => {
+  // Basic validation for required fields
+  if (!data.projection || typeof data.projection.months !== 'number' || typeof data.projection.cashAtEndOfRunway !== 'string') {
+    console.warn('RunwayAnalysisData: Invalid projection, using fallback.');
+    data.projection = { months: 0, cashAtEndOfRunway: "$0" };
+  }
+  if (!Array.isArray(data.scenarios)) {
+    console.warn('RunwayAnalysisData: Invalid scenarios array, using fallback.');
+    data.scenarios = [];
+  }
+  if (!Array.isArray(data.optimizations)) {
+    console.warn('RunwayAnalysisData: Invalid optimizations array, using fallback.');
+    data.optimizations = [];
+  }
+  return data as RunwayAnalysisData;
+};
+
+export async function generateGrowthOpportunity(startupIdea: string, startupName: string): Promise<GrowthOpportunityData> {
+  try {
+    const { text } = await generateText({
+      model: client(modelName),
+      prompt: `
+        You are a seasoned growth strategist. Your task is to identify key growth opportunities for the startup "${startupName}", which is developing: "${startupIdea}".
+
+        1.  **Research**: Begin by searching the web for information about ${startupName}. Analyze their product, target audience, current market position, competitors, and customer feedback.
+        2.  **Identify Opportunities**: Based on your research, identify untapped market segments, potential upsell/cross-sell strategies, and strategic expansion plans (e.g., new geographic markets, new product features).
+        3.  **Benchmark**: Find key performance benchmarks for their industry (e.g., customer acquisition cost, lifetime value, churn rate) and compare them to where ${startupName} likely stands.
+        4.  **Structure Output**: Compile your findings into a valid JSON object. Do not include any text outside the JSON object.
+        
+        The JSON object should follow this structure:
+        -   **marketSegments**: An array of potential new market segments.
+            -   **name** (string): The name of the segment.
+            -   **description** (string): A description of the opportunity in this segment.
+            -   **opportunityScore** (number): A score from 1 to 100 indicating the potential of this segment.
+        -   **upsellCrossSell**: An array of strings with actionable ideas for upselling or cross-selling to existing customers.
+        -   **expansionStrategies**: An array of strings detailing high-level strategies for business expansion.
+        -   **benchmarking**: An array of objects comparing the startup to industry benchmarks.
+            -   **metric** (string): The metric being compared (e.g., "Churn Rate").
+            -   **yourValue** (string): The estimated value for ${startupName}.
+            -   **industryAverage** (string): The average for the industry.
+            -   **topCompetitor** (string): The value for a top competitor, if available.
+      `,
+    });
+    console.log('Raw Growth Opportunity from API:', text);
+    const data = safeJSONParse(text, { marketSegments: [], upsellCrossSell: [], expansionStrategies: [], benchmarking: [] });
+    return validateGrowthOpportunityData(data);
+  } catch (error) {
+    console.error('Error generating growth opportunity:', error);
+    throw error;
+  }
+}
+
+const validateGrowthOpportunityData = (data: any): GrowthOpportunityData => {
+  if (!Array.isArray(data.marketSegments)) {
+    console.warn('GrowthOpportunityData: Invalid marketSegments array, using fallback.');
+    data.marketSegments = [];
+  }
+  if (!Array.isArray(data.upsellCrossSell)) {
+    console.warn('GrowthOpportunityData: Invalid upsellCrossSell array, using fallback.');
+    data.upsellCrossSell = [];
+  }
+  if (!Array.isArray(data.expansionStrategies)) {
+    console.warn('GrowthOpportunityData: Invalid expansionStrategies array, using fallback.');
+    data.expansionStrategies = [];
+  }
+  if (!Array.isArray(data.benchmarking)) {
+    console.warn('GrowthOpportunityData: Invalid benchmarking array, using fallback.');
+    data.benchmarking = [];
+  }
+  return data as GrowthOpportunityData;
+};
+
+export async function generateInvestorStrategy(startupIdea: string, startupName: string): Promise<InvestorStrategyData> {
+  try {
+    const { text } = await generateText({
+      model: client(modelName),
+      prompt: `
+        You are a fundraising expert and venture capitalist. Your goal is to create a detailed investor and fundraising strategy for "${startupName}", a startup working on: "${startupIdea}".
+
+        1.  **Research**: Start by investigating ${startupName}. Find information on their founding team, current funding stage (e.g., Pre-Seed, Seed, Series A), market size, and traction (e.g., user numbers, revenue). Based on this, determine the most appropriate type of investor to target.
+        2.  **Match Investors**: Identify specific investors or VC firms that are a strong match. Look for those who invest in their industry, stage, and geography. Explain *why* each is a good fit.
+        3.  **Develop Strategy**: Formulate a high-level fundraising strategy. Advise on the optimal timing for the next funding round and what key metrics should be achieved beforehand.
+        4.  **Prepare for Questions**: Anticipate common questions from investors and prepare concise, compelling answers.
+        5.  **Structure Output**: Return your complete analysis as a valid JSON object. Do not include any text outside the JSON object.
+
+        The JSON object must follow this structure:
+        -   **investorMatches**: An array of potential investors or firms.
+            -   **name** (string): The name of the investor or firm.
+            -   **firm** (string): The firm they belong to (if applicable).
+            -   **stage** (string): The investment stage they focus on.
+            -   **sector** (string): The industry/sector they focus on.
+            -   **whyMatch** (string): A brief explanation of why they are a good fit.
+            -   **contact** (string): Public contact information or a suggested way to connect.
+        -   **fundraisingTiming** (string): A recommendation on when to start fundraising (e.g., "After reaching 10k MRR").
+        -   **fundraisingStrategy**: An array of strings outlining the strategic steps for fundraising.
+        -   **commonQuestionsAnswers**: An array of objects with common questions and suggested answers.
+            -   **question** (string): The anticipated question.
+            -   **answer** (string): A well-crafted answer.
+      `,
+    });
+    console.log('Raw Investor Strategy from API:', text);
+    const data = safeJSONParse(text, { investorMatches: [], fundraisingTiming: '', fundraisingStrategy: [], commonQuestionsAnswers: [] });
+    return validateInvestorStrategyData(data);
+  } catch (error) {
+    console.error('Error generating investor strategy:', error);
+    throw error;
+  }
+}
+
+const validateInvestorStrategyData = (data: any): InvestorStrategyData => {
+  if (!Array.isArray(data.investorMatches)) {
+    console.warn('InvestorStrategyData: Invalid investorMatches array, using fallback.');
+    data.investorMatches = [];
+  }
+  if (typeof data.fundraisingTiming !== 'string') {
+    console.warn('InvestorStrategyData: Invalid fundraisingTiming, using fallback.');
+    data.fundraisingTiming = "";
+  }
+  if (!Array.isArray(data.fundraisingStrategy)) {
+    console.warn('InvestorStrategyData: Invalid fundraisingStrategy array, using fallback.');
+    data.fundraisingStrategy = [];
+  }
+  if (!Array.isArray(data.commonQuestionsAnswers)) {
+    console.warn('InvestorStrategyData: Invalid commonQuestionsAnswers array, using fallback.');
+    data.commonQuestionsAnswers = [];
+  }
+  return data as InvestorStrategyData;
+};
+
+export async function generateProductTeamHealth(startupIdea: string, startupName: string): Promise<ProductTeamHealthData> {
+  try {
+    const { text } = await generateText({
+      model: client(modelName),
+      prompt: `
+        You are an expert in product management and team dynamics. Your task is to conduct a "health check" of the product and team at "${startupName}", a startup focused on: "${startupIdea}".
+
+        1.  **Research**: Search online for information about ${startupName}'s product development. Look for product launch announcements, team size and structure (e.g., on LinkedIn), and user reviews or feedback to identify known issues or requested features.
+        2.  **Analyze**: Based on your research and common startup patterns, analyze their likely product roadmap, team structure, development velocity, and potential sources of technical debt.
+        3.  **Recommend Improvements**: Suggest actionable improvements for their processes, team collaboration, and strategies for reducing technical debt.
+        4.  **Structure Output**: Present your findings in a valid JSON object. Do not include any text outside the JSON object.
+
+        The JSON object must adhere to the following structure:
+        -   **productRoadmapReview** (string): A high-level review of their likely product roadmap and priorities.
+        -   **teamStructureAnalysis** (string): An analysis of their probable team structure and potential communication gaps.
+        -   **velocityAssessment** (string): An assessment of their development speed and potential bottlenecks.
+        -   **processImprovements**: An array of strings with suggestions for improving their development and product management processes.
+        -   **technicalDebtReduction**: An array of strings with strategies for identifying and reducing technical debt.
+      `,
+    });
+    console.log('Raw Product Team Health from API:', text);
+    const data = safeJSONParse(text, { productRoadmapReview: '', teamStructureAnalysis: '', velocityAssessment: '', processImprovements: [], technicalDebtReduction: [] });
+    return validateProductTeamHealthData(data);
+  } catch (error) {
+    console.error('Error generating product team health:', error);
+    throw error;
+  }
+}
+
+const validateProductTeamHealthData = (data: any): ProductTeamHealthData => {
+  if (typeof data.productRoadmapReview !== 'string') data.productRoadmapReview = "";
+  if (typeof data.teamStructureAnalysis !== 'string') data.teamStructureAnalysis = "";
+  if (typeof data.velocityAssessment !== 'string') data.velocityAssessment = "";
+  if (!Array.isArray(data.processImprovements)) data.processImprovements = [];
+  if (!Array.isArray(data.technicalDebtReduction)) data.technicalDebtReduction = [];
+  return data as ProductTeamHealthData;
+};
+
+export async function generateMilestoneKPI(startupIdea: string, startupName: string): Promise<MilestoneKPIData> {
+  try {
+    const { text } = await generateText({
+      model: client(modelName),
+      prompt: `
+        You are a business analyst and strategist specializing in startups. Your objective is to define and track key milestones and KPIs for "${startupName}", a company working on: "${startupIdea}".
+
+        1.  **Research**: Investigate ${startupName} to understand their business model, stage, and industry. Identify the most critical Key Performance Indicators (KPIs) for a business like theirs (e.g., Monthly Recurring Revenue, Customer Acquisition Cost, Churn Rate).
+        2.  **Define KPIs**: For each KPI, define a target, estimate the current value, and create a forecast. Provide a brief description of why each KPI is important.
+        3.  **Set Milestones**: Outline key business and product milestones for the next 12-18 months. These should be specific, measurable, achievable, relevant, and time-bound (SMART).
+        4.  **Suggest Actions**: Propose corrective actions to take if KPIs are not being met.
+        5.  **Structure Output**: Return your analysis as a valid JSON object. Do not include any text outside the JSON object.
+
+        The JSON object should conform to the following structure:
+        -   **kpis**: An array of key performance indicators.
+            -   **name** (string): The name of the KPI.
+            -   **target** (string): The target value.
+            -   **current** (string): The estimated current value.
+            -   **forecast** (string): The forecasted value for the next period.
+            -   **description** (string): Why this KPI is important.
+        -   **milestones**: An array of upcoming milestones.
+            -   **name** (string): The name of the milestone.
+            -   **description** (string): A brief description of the milestone.
+            -   **targetDate** (string): The target completion date.
+            -   **status** (string): The current status (e.g., "Not Started", "In Progress").
+        -   **correctiveActions**: An array of strings with suggestions for what to do if performance lags.
+      `,
+    });
+    console.log('Raw Milestone/KPI from API:', text);
+    const data = safeJSONParse(text, { kpis: [], milestones: [], correctiveActions: [] });
+    return validateMilestoneKPIData(data);
+  } catch (error) {
+    console.error('Error generating milestone/KPI data:', error);
+    throw error;
+  }
+}
+
+const validateMilestoneKPIData = (data: any): MilestoneKPIData => {
+  if (!Array.isArray(data.kpis)) {
+    console.warn('MilestoneKPIData: Invalid kpis array, using fallback.');
+    data.kpis = [];
+  }
+  if (!Array.isArray(data.milestones)) {
+    console.warn('MilestoneKPIData: Invalid milestones array, using fallback.');
+    data.milestones = [];
+  }
+  if (!Array.isArray(data.correctiveActions)) {
+    console.warn('MilestoneKPIData: Invalid correctiveActions array, using fallback.');
+    data.correctiveActions = [];
+  }
+  return data as MilestoneKPIData;
+};
+
+// New Agent Functions for Build Goal
+export async function generateFeaturePrioritization(idea: string, backlog: string): Promise<FeaturePrioritizationData> {
+  const result = await generateText({
+    model: client(modelName),
+    system: `You are an AI assistant specialized in product management and feature prioritization. Based on the startup idea and a provided backlog of feature ideas, score and prioritize features based on market trends, user feedback, and business goals. The output MUST be a JSON object conforming to the FeaturePrioritizationData interface.`, 
+    prompt: `Startup Idea: ${idea}\n\nFeature Backlog:\n${backlog}`,
+  });
+  return safeJSONParse(result.text, {});
+}
+
+export async function generateInstantPrototyping(idea: string, featureDescriptions: string): Promise<InstantPrototypingData> {
+  const result = await generateText({
+    model: client(modelName),
+    system: `You are an AI agent that generates interactive wireframes and user flows from feature descriptions. The output MUST be a JSON object conforming to the InstantPrototypingData interface. For wireframes, generate simple HTML/CSS code snippets.`, 
+    prompt: `Startup Idea: ${idea}\n\nFeature Descriptions:\n${featureDescriptions}`,
+  });
+  return safeJSONParse(result.text, {});
+}
+
+export async function generateTechStackOptimization(idea: string, currentStack: string): Promise<TechStackOptimizationData> {
+  const result = await generateText({
+    model: client(modelName),
+    system: `You are an expert in software architecture and tech stack optimization. Based on the startup idea and current tech stack, recommend upgrades, integrations, or cost-saving alternatives, along with reasoning. The output MUST be a JSON object conforming to the TechStackOptimizationData interface.`, 
+    prompt: `Startup Idea: ${idea}\n\nCurrent Tech Stack:\n${currentStack}`,
+  });
+  return safeJSONParse(result.text, {});
+}
+
+export async function generateTestSuite(idea: string, featureDetails: string): Promise<TestSuiteGenerationData> {
+  const result = await generateText({
+    model: client(modelName),
+    system: `You are an AI quality assurance engineer. Based on the startup idea and detailed feature descriptions, generate comprehensive unit, integration, and end-to-end test cases. The output MUST be a JSON object conforming to the TestSuiteGenerationData interface.`, 
+    prompt: `Startup Idea: ${idea}\n\nFeature Details:\n${featureDetails}`,
+  });
+  return safeJSONParse(result.text, {});
+}
+
+export async function generatePairProgramming(idea: string, userStory: string): Promise<PairProgrammingData> {
+  const result = await generateText({
+    model: client(modelName),
+    system: `You are an AI pair programming assistant. Based on the startup idea and a user story, generate relevant code snippets, review pull requests (represented as textual comments), or scaffold new modules. The output MUST be a JSON object conforming to the PairProgrammingData interface.`, 
+    prompt: `Startup Idea: ${idea}\n\nUser Story:\n${userStory}`,
+  });
+  return safeJSONParse(result.text, {});
+}
+
+export async function generateMVPToScaleRoadmap(idea: string, mvpDescription: string): Promise<MVPToScaleRoadmapData> {
+  const result = await generateText({
+    model: client(modelName),
+    system: `You are an AI strategic advisor for startups. Based on the startup idea and MVP description, generate a phased roadmap for scaling infrastructure, hiring, go-to-market, and compliance. The output MUST be a JSON object conforming to the MVPToScaleRoadmapData interface.`, 
+    prompt: `Startup Idea: ${idea}\n\nMVP Description:\n${mvpDescription}`,
+  });
+  return safeJSONParse(result.text, {});
+}
+
+export async function generateCommunityFeedback(idea: string, rawFeedback: string): Promise<CommunityFeedbackData> {
+  const result = await generateText({
+    model: client(modelName),
+    system: `You are an AI assistant that summarizes community and expert feedback. Based on the startup idea and raw feedback, provide a concise summary and actionable insights. The output MUST be a JSON object conforming to the CommunityFeedbackData interface.`, 
+    prompt: `Startup Idea: ${idea}\n\nRaw Feedback:\n${rawFeedback}`,
+  });
+  return safeJSONParse(result.text, {});
+}
+
+export async function generateComplianceRiskCheck(idea: string, productPlan: string, industry: string): Promise<ComplianceRiskCheckData> {
+  const result = await generateText({
+    model: client(modelName),
+    system: `You are an AI compliance and risk analyst. Based on the startup idea, product plan, and industry, scan for compliance gaps and risk factors, providing mitigation suggestions. The output MUST be a JSON object conforming to the ComplianceRiskCheckData interface.`, 
+    prompt: `Startup Idea: ${idea}\n\nProduct Plan:\n${productPlan}\n\nIndustry: ${industry}`,
+  });
+  return safeJSONParse(result.text, {});
+}
+
 export default {
   generateMarketResearch,
   generateBusinessPlan,
   validateBusinessIdea,
   designMVPFeatures,
   generatePitchDocument,
-  generateInvestorInsights
+  generateInvestorInsights,
+  generateRunwayAnalysis,
+  generateGrowthOpportunity,
+  generateInvestorStrategy,
+  generateProductTeamHealth,
+  generateMilestoneKPI,
+  generateFeaturePrioritization,
+  generateInstantPrototyping,
+  generateTechStackOptimization,
+  generateTestSuite,
+  generatePairProgramming,
+  generateMVPToScaleRoadmap,
+  generateCommunityFeedback,
+  generateComplianceRiskCheck,
 }; 

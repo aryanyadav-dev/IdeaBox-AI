@@ -10,7 +10,8 @@ import {
   CheckCircle,
   Star,
   Users,
-  Sparkles
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import { FadeIn, SlideUp, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem, HoverScale } from '../components/ui/MotionComponents';
 
@@ -39,46 +40,53 @@ const LandingPage: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-gemini-background text-gemini-text-primary"
+      className="min-h-screen bg-gemini-background text-gemini-text-primary overflow-hidden"
     >
+      {/* Background Gradient Orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-[800px] h-[800px] bg-gemini-glow rounded-full blur-[120px] opacity-30 animate-pulse-slow"></div>
+        <div className="absolute top-1/3 -left-40 w-[600px] h-[600px] bg-gemini-glow rounded-full blur-[100px] opacity-20 animate-pulse-slow delay-1000"></div>
+        <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gemini-glow rounded-full blur-[110px] opacity-25 animate-pulse-slow delay-500"></div>
+      </div>
+
       {/* Navigation */}
       <motion.nav 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-gemini-surface"
+        className="fixed top-0 left-0 right-0 z-50 bg-gemini-background/50 backdrop-blur-sm"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <HoverScale>
-              <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gemini-card">
+                <div className="flex-shrink-0">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gemini-card/50">
                     <Sparkles className="h-6 w-6 text-gemini-blue" />
                   </div>
                 </div>
               </HoverScale>
-              <div className="ml-3 text-xl font-semibold">Ideation AI</div>
+              <div className="ml-3 text-xl font-semibold bg-gemini-gradient bg-clip-text text-transparent">Ideation AI</div>
               <div className="hidden md:block">
                 <div className="ml-10 flex items-baseline space-x-8">
                   <motion.button 
                     onClick={() => scrollToSection("features")} 
-                    className="text-gemini-text-secondary hover:text-gemini-text-primary px-3 py-2 rounded-md text-sm font-medium"
-                    whileHover={{ scale: 1.05 }}
+                    className="text-gemini-text-secondary hover:text-gemini-text-primary px-3 py-2 rounded-md text-sm font-medium transition-all duration-300"
+                    whileHover={{ scale: 1.05, y: -2 }}
                   >
                     Features
                   </motion.button>
                   <motion.button 
                     onClick={() => scrollToSection("how-it-works")} 
-                    className="text-gemini-text-secondary hover:text-gemini-text-primary px-3 py-2 rounded-md text-sm font-medium"
-                    whileHover={{ scale: 1.05 }}
+                    className="text-gemini-text-secondary hover:text-gemini-text-primary px-3 py-2 rounded-md text-sm font-medium transition-all duration-300"
+                    whileHover={{ scale: 1.05, y: -2 }}
                   >
                     How it Works
                   </motion.button>
                   <motion.button 
                     onClick={() => scrollToSection("pricing")} 
-                    className="text-gemini-text-secondary hover:text-gemini-text-primary px-3 py-2 rounded-md text-sm font-medium"
-                    whileHover={{ scale: 1.05 }}
+                    className="text-gemini-text-secondary hover:text-gemini-text-primary px-3 py-2 rounded-md text-sm font-medium transition-all duration-300"
+                    whileHover={{ scale: 1.05, y: -2 }}
                   >
                     Pricing
                   </motion.button>
@@ -88,8 +96,8 @@ const LandingPage: React.FC = () => {
             <div className="flex items-center gap-4">
               <motion.button
                 onClick={() => navigate('/dashboard')}
-                className="bg-gemini-button-gradient text-gemini-text-primary px-5 py-2 rounded-full text-sm font-medium hover:bg-gemini-button-gradient-hover transition-all"
-                whileHover={{ scale: 1.05, boxShadow: '0 0 15px rgba(138, 180, 248, 0.5)' }}
+                className="bg-gemini-button-gradient text-gemini-text-primary px-6 py-2.5 rounded-xl text-sm font-medium shadow-glow hover:shadow-glow-hover transition-all duration-500"
+                whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 Get Started
@@ -100,28 +108,29 @@ const LandingPage: React.FC = () => {
       </motion.nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gemini-hero-gradient">
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gemini-hero-gradient relative">
         <div className="max-w-7xl mx-auto">
           <motion.div 
             variants={fadeInUpVariant}
             initial="hidden"
             animate="visible"
-            className="text-center"
+            className="text-center relative z-10"
           >
             <motion.div
-              className="inline-block mb-3"
+              className="inline-block mb-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              <span className="bg-gemini-gradient bg-clip-text text-transparent px-4 py-1 rounded-full text-sm font-medium border border-gemini-surface">
-                Powered by AI
+              <span className="bg-gemini-glass backdrop-blur-xl px-6 py-2 rounded-xl text-sm font-medium border border-gemini-surface shadow-glass flex items-center gap-2">
+                <Zap className="w-4 h-4 text-gemini-yellow" />
+                <span className="bg-gemini-gradient bg-clip-text text-transparent">Powered by AI</span>
               </span>
             </motion.div>
-            <h1 className="text-5xl md:text-6xl font-bold text-gemini-text-primary mb-6 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold text-gemini-text-primary mb-6 leading-tight">
               Turn Your Startup Ideas into
               <motion.span 
-                className="bg-gemini-gradient bg-clip-text text-transparent ml-2"
+                className="bg-gemini-gradient bg-clip-text text-transparent ml-2 inline-block"
                 initial={{ opacity: 0.6 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse" }}
@@ -145,25 +154,21 @@ const LandingPage: React.FC = () => {
             >
               <motion.button
                 onClick={() => navigate('/dashboard')}
-                className="w-full sm:w-auto bg-gemini-button-gradient text-gemini-text-primary px-8 py-4 rounded-full text-lg font-medium hover:bg-gemini-button-gradient-hover transition-all flex items-center justify-center"
-                whileHover={{ 
-                  scale: 1.03, 
-                  boxShadow: '0 0 25px rgba(138, 180, 248, 0.5)',
-                }}
+                className="w-full sm:w-auto bg-gemini-button-gradient text-gemini-text-primary px-8 py-4 rounded-xl text-lg font-medium shadow-glow hover:shadow-glow-hover transition-all duration-500 backdrop-blur-xl flex items-center justify-center group"
+                whileHover={{ scale: 1.03, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 Start Building
                 <motion.div
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="ml-2 group-hover:translate-x-1 transition-transform duration-300"
                 >
-                <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="h-5 w-5" />
                 </motion.div>
               </motion.button>
               <motion.button 
                 onClick={() => scrollToSection("how-it-works")}
-                className="w-full sm:w-auto text-gemini-text-primary px-8 py-4 rounded-full text-lg font-medium border border-gemini-surface bg-gemini-card hover:bg-gemini-surface transition-all"
-                whileHover={{ scale: 1.03 }}
+                className="w-full sm:w-auto text-gemini-text-primary px-8 py-4 rounded-xl text-lg font-medium border border-gemini-surface bg-gemini-glass backdrop-blur-xl hover:bg-gemini-surface transition-all duration-500 shadow-glass"
+                whileHover={{ scale: 1.03, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 Learn More
@@ -172,29 +177,32 @@ const LandingPage: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Floating shapes decoration */}
-        <div className="relative max-w-7xl mx-auto mt-16 hidden md:block">
+        {/* Floating Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none mix-blend-soft-light">
           <motion.div 
-            className="absolute top-0 left-10 w-24 h-24 rounded-2xl bg-gemini-blue opacity-10"
+            className="absolute top-20 left-1/4 w-32 h-32 rounded-2xl bg-gemini-blue/20 backdrop-blur-3xl"
             animate={{ 
               y: [0, -15, 0],
-              rotate: [0, 5, 0]
+              rotate: [0, 5, 0],
+              scale: [1, 1.1, 1]
             }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div 
-            className="absolute top-20 right-20 w-16 h-16 rounded-full bg-gemini-purple opacity-10"
+            className="absolute top-40 right-1/4 w-24 h-24 rounded-full bg-gemini-purple/20 backdrop-blur-3xl"
             animate={{ 
               y: [0, 20, 0],
-              x: [0, -10, 0]
+              x: [0, -10, 0],
+              scale: [1, 0.9, 1]
             }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div 
-            className="absolute bottom-0 right-40 w-20 h-20 rounded-lg bg-gemini-pink opacity-10"
+            className="absolute bottom-20 right-1/3 w-28 h-28 rounded-lg bg-gemini-pink/20 backdrop-blur-3xl"
             animate={{ 
               y: [0, -25, 0],
-              rotate: [0, -5, 0]
+              rotate: [0, -5, 0],
+              scale: [1, 1.2, 1]
             }}
             transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
           />

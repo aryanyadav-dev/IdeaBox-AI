@@ -70,21 +70,21 @@ The platform supports four distinct project goals:
 ### Installation
 
 1.  **Clone the repository:**
-    ```bash
+```bash
     git clone <repository-url>
     cd ideator-ai
-    ```
+```
 
 2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
+```bash
+npm install
+```
 
 3.  **Set up environment variables:**
     Create a `.env.local` file in the project root and add your OpenAI API key:
-    ```
+```
     VITE_OPENAI_API_KEY="your-openai-api-key"
-    ```
+```
 
 ### Running the Application
 

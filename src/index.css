@@ -1,3 +1,69 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gemini-background text-gemini-text-primary antialiased;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gemini-background;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gemini-surface rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gemini-card;
+  }
+
+  ::selection {
+    @apply bg-gemini-blue/20 text-gemini-text-primary;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gemini-gradient bg-clip-text text-transparent;
+  }
+
+  .bg-glass {
+    @apply bg-gemini-glass backdrop-blur-xl border border-gemini-surface shadow-glass;
+  }
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

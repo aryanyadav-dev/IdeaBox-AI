@@ -13,6 +13,7 @@ import {
   Sparkles,
   Zap
 } from 'lucide-react';
+import { EvervaultCardDemo } from '../components/ui/evervault-card-demo';
 import { FadeIn, SlideUp, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem, HoverScale } from '../components/ui/MotionComponents';
 
 const LandingPage: React.FC = () => {
@@ -459,61 +460,21 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Developer Card */}
       <section className="py-20 bg-gemini-background border-t border-gemini-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <span className="inline-block bg-gemini-gradient bg-clip-text text-transparent px-3 py-1 rounded-full text-sm font-medium border border-gemini-surface mb-3">
-              Testimonials
+              Developer
             </span>
-            <h2 className="text-3xl font-bold text-gemini-text-primary mb-4">Loved by Founders</h2>
-            <p className="text-xl text-gemini-text-secondary">See what others are saying about our platform</p>
+            <h2 className="text-3xl font-bold text-gemini-text-primary mb-4">Meet the Developer</h2>
+            <p className="text-xl text-gemini-text-secondary">Click to visit developer website</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                quote: "This platform helped me validate my startup idea in hours instead of weeks. The AI insights were incredibly valuable.",
-                author: "Sarah Chen",
-                role: "Founder, TechStart",
-                color: "bg-gemini-blue"
-              },
-              {
-                quote: "The MVP planning features saved us countless hours of development time. Highly recommended for technical founders.",
-                author: "Michael Rodriguez",
-                role: "CTO, BuildFast",
-                color: "bg-gemini-purple"
-              },
-              {
-                quote: "The market research insights helped us pivot our business model early, potentially saving us months of work.",
-                author: "Emily Thompson",
-                role: "CEO, GrowthLabs",
-                color: "bg-gemini-pink"
-              }
-            ].map((testimonial, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-gemini-card-gradient p-8 rounded-2xl border border-gemini-surface relative overflow-hidden"
-              >
-                <div className={`${testimonial.color} w-16 h-1 rounded-full bg-opacity-60 mb-6`}></div>
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-gemini-yellow fill-current" />
-                  ))}
-                </div>
-                <p className="text-gemini-text-secondary mb-6 relative z-10">{testimonial.quote}</p>
-                <div className="relative z-10">
-                  <div className="font-medium text-gemini-text-primary">{testimonial.author}</div>
-                  <div className="text-gemini-text-secondary text-sm">{testimonial.role}</div>
-                </div>
-                {/* Decorative elements */}
-                <div className="absolute -right-8 -bottom-8 w-16 h-16 rounded-full opacity-5 bg-white"></div>
-                <div className="absolute -left-4 -top-4 w-8 h-8 rounded-full opacity-5 bg-white"></div>
-              </motion.div>
-            ))}
+          <div className="max-w-lg mx-auto">
+            <a href="https://your-website-url.com" target="_blank" rel="noopener noreferrer">
+              <EvervaultCardDemo />
+            </a>
           </div>
         </div>
       </section>

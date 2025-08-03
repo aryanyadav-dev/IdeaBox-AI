@@ -1331,7 +1331,7 @@ export async function generateGrowthOpportunity(startupIdea: string, startupName
         -   **marketSegments**: An array of potential new market segments.
             -   **name** (string): The name of the segment.
             -   **description** (string): A description of the opportunity in this segment.
-            -   **opportunityScore** (number): A score from 1 to 100 indicating the potential of this segment.
+            -   **opportunityScore** (number): A score from 1 to 10 indicating the potential of this segment.
         -   **upsellCrossSell**: An array of strings with actionable ideas for upselling or cross-selling to existing customers.
         -   **expansionStrategies**: An array of strings detailing high-level strategies for business expansion.
         -   **benchmarking**: An array of objects comparing the startup to industry benchmarks.
@@ -1354,6 +1354,14 @@ const validateGrowthOpportunityData = (data: any): GrowthOpportunityData => {
   if (!Array.isArray(data.marketSegments)) {
     console.warn('GrowthOpportunityData: Invalid marketSegments array, using fallback.');
     data.marketSegments = [];
+  } else {
+    // Ensure opportunity scores are within 1-10 range
+    data.marketSegments = data.marketSegments.map((segment: { name: string; description: string; opportunityScore: number }) => ({
+      ...segment,
+      opportunityScore: segment.opportunityScore > 10 ? 
+        Math.round(segment.opportunityScore / 10) : // Convert from 100-scale if needed
+        Math.min(Math.max(Math.round(segment.opportunityScore), 1), 10) // Ensure between 1-10
+    }));
   }
   if (!Array.isArray(data.upsellCrossSell)) {
     console.warn('GrowthOpportunityData: Invalid upsellCrossSell array, using fallback.');
@@ -1611,4 +1619,4 @@ export default {
   generateMVPToScaleRoadmap,
   generateCommunityFeedback,
   generateComplianceRiskCheck,
-}; 
+};

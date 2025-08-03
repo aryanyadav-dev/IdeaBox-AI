@@ -4,8 +4,13 @@
 
 @layer base {
   body {
-    @apply bg-gemini-background text-gemini-text-primary antialiased;
+    @apply bg-gemini-background text-gemini-text-primary antialiased overflow-x-hidden;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  }
+
+  /* Hide scrollbar during data loading/scraping */
+  body.loading-data {
+    @apply overflow-y-hidden;
   }
 
   ::-webkit-scrollbar {

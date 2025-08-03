@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { setLoadingState } from '../utils/loadingState';
 import openAIService, { 
   ResearchData, 
   BusinessPlanData, 
@@ -31,6 +32,11 @@ export type AgentType =
   'pairProgramming' | 'mvpToScaleRoadmap' | 'communityFeedback' | 'complianceRiskCheck';
 
 type AgentStatus = 'idle' | 'running' | 'completed' | 'error';
+
+// Track if any agent is currently running
+const isAnyAgentRunning = (statuses: Record<AgentType, AgentStatus>): boolean => {
+  return Object.values(statuses).some(status => status === 'running');
+};
 type LogType = 'info' | 'success' | 'error' | 'thinking' | 'warning';
 
 interface AgentLog {
@@ -99,6 +105,12 @@ export const AgentContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
     communityFeedback: 'idle',
     complianceRiskCheck: 'idle',
   });
+  
+  // Update loading state when agent status changes
+  useEffect(() => {
+    const isLoading = isAnyAgentRunning(agentStatus);
+    setLoadingState(isLoading);
+  }, [agentStatus]);
   
   const [agentData, setAgentData] = useState<Record<AgentType, any>>({
     research: null,

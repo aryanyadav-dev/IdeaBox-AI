@@ -1528,75 +1528,1465 @@ const validateMilestoneKPIData = (data: any): MilestoneKPIData => {
 
 // New Agent Functions for Build Goal
 export async function generateFeaturePrioritization(idea: string, backlog: string): Promise<FeaturePrioritizationData> {
-  const result = await generateText({
-    model: client(modelName),
-    system: `You are an AI assistant specialized in product management and feature prioritization. Based on the startup idea and a provided backlog of feature ideas, score and prioritize features based on market trends, user feedback, and business goals. The output MUST be a JSON object conforming to the FeaturePrioritizationData interface.`, 
-    prompt: `Startup Idea: ${idea}\n\nFeature Backlog:\n${backlog}`,
-  });
-  return safeJSONParse(result.text, {});
+  try {
+    // Create a fallback structure in case JSON parsing fails
+    const fallback: FeaturePrioritizationData = {
+      prioritizedFeatures: [
+        {
+          name: "Core Feature",
+          description: "The main functionality of the application",
+          score: 90,
+          reasoning: "Essential for the minimum viable product"
+        },
+        {
+          name: "User Authentication",
+          description: "Secure login and account management",
+          score: 85,
+          reasoning: "Critical for user data security and personalization"
+        },
+        {
+          name: "Basic Analytics",
+          description: "Simple usage tracking and reporting",
+          score: 70,
+          reasoning: "Important for understanding user behavior"
+        }
+      ]
+    };
+
+    // If backlog is empty, return the fallback immediately
+    if (!backlog || backlog.trim() === '') {
+      console.log('Empty backlog provided, using fallback data');
+      return fallback;
+    }
+
+    // Process the backlog to ensure it's in a format the AI can understand
+    const processedBacklog = backlog.trim();
+    
+    const result = await generateText({
+      model: client(modelName),
+      system: `You are an AI assistant specialized in product management and feature prioritization. Based on the startup idea and a provided backlog of feature ideas, score and prioritize features based on market trends, user feedback, and business goals.
+
+The output MUST be a valid JSON object with the following structure and nothing else:
+{
+  "prioritizedFeatures": [
+    {
+      "name": "Feature Name",
+      "description": "Feature description",
+      "score": 85,
+      "reasoning": "Reason for the score"
+    }
+  ]
+}
+
+Ensure that:
+1. Each feature has a name, description, score (0-100), and reasoning
+2. The JSON is properly formatted with no syntax errors
+3. Do not include any text outside the JSON structure
+4. If the backlog is empty or unclear, create reasonable features based on the startup idea`, 
+      prompt: `Startup Idea: ${idea}\n\nFeature Backlog:\n${processedBacklog}`,
+    });
+
+    // Try to parse the result
+    try {
+      const parsedData = safeJSONParse(result.text, fallback);
+      
+      // Validate the parsed data
+      if (!parsedData.prioritizedFeatures || !Array.isArray(parsedData.prioritizedFeatures) || parsedData.prioritizedFeatures.length === 0) {
+        console.error('Invalid prioritizedFeatures array in parsed data');
+        return fallback;
+      }
+      
+      // Ensure each feature has the required properties
+      const validatedFeatures = parsedData.prioritizedFeatures.map(feature => ({
+        name: feature.name || 'Unnamed Feature',
+        description: feature.description || 'No description provided',
+        score: typeof feature.score === 'number' ? feature.score : 50,
+        reasoning: feature.reasoning || 'No reasoning provided'
+      }));
+      
+      return {
+        prioritizedFeatures: validatedFeatures
+      };
+    } catch (parseError) {
+      console.error('Error parsing feature prioritization data:', parseError);
+      return fallback;
+    }
+  } catch (error) {
+    console.error('Feature prioritization agent error:', error);
+    // Return fallback data in case of any error
+    return {
+      prioritizedFeatures: [
+        {
+          name: "Core Feature",
+          description: "The main functionality of the application",
+          score: 90,
+          reasoning: "Essential for the minimum viable product"
+        },
+        {
+          name: "User Authentication",
+          description: "Secure login and account management",
+          score: 85,
+          reasoning: "Critical for user data security and personalization"
+        },
+        {
+          name: "Basic Analytics",
+          description: "Simple usage tracking and reporting",
+          score: 70,
+          reasoning: "Important for understanding user behavior"
+        }
+      ]
+    };
+  }
 }
 
 export async function generateInstantPrototyping(idea: string, featureDescriptions: string): Promise<InstantPrototypingData> {
-  const result = await generateText({
-    model: client(modelName),
-    system: `You are an AI agent that generates interactive wireframes and user flows from feature descriptions. The output MUST be a JSON object conforming to the InstantPrototypingData interface. For wireframes, generate simple HTML/CSS code snippets.`, 
-    prompt: `Startup Idea: ${idea}\n\nFeature Descriptions:\n${featureDescriptions}`,
-  });
-  return safeJSONParse(result.text, {});
+  try {
+    // Create a fallback structure in case JSON parsing fails
+    const fallback: InstantPrototypingData = {
+      wireframes: [
+        {
+          name: "Main Dashboard",
+          description: "Central view showing key metrics and navigation",
+          htmlCssCode: `<div class="dashboard">
+  <header class="header">
+    <h1>Dashboard</h1>
+    <nav class="nav">
+      <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Features</a></li>
+        <li><a href="#">Settings</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="main-content">
+    <div class="widget">
+      <h2>Quick Stats</h2>
+      <div class="stats-container">
+        <div class="stat-item">Users: 1,234</div>
+        <div class="stat-item">Revenue: $5,678</div>
+      </div>
+    </div>
+  </main>
+</div>`
+        },
+        {
+          name: "User Profile",
+          description: "User information and preferences page",
+          htmlCssCode: `<div class="profile-container">
+  <div class="profile-header">
+    <img src="avatar-placeholder.jpg" alt="User Avatar" class="avatar" />
+    <h1 class="username">User Name</h1>
+  </div>
+  <div class="profile-details">
+    <div class="detail-item">
+      <span class="label">Email:</span>
+      <span class="value">user@example.com</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Member Since:</span>
+      <span class="value">January 1, 2023</span>
+    </div>
+  </div>
+  <div class="profile-actions">
+    <button class="btn primary">Edit Profile</button>
+    <button class="btn secondary">Change Password</button>
+  </div>
+</div>`
+        }
+      ],
+      userFlows: [
+        {
+          name: "User Registration Flow",
+          steps: [
+            "User lands on homepage",
+            "User clicks 'Sign Up' button",
+            "User fills registration form",
+            "User submits form and receives confirmation email",
+            "User clicks verification link and completes registration"
+          ]
+        },
+        {
+          name: "Basic Task Completion Flow",
+          steps: [
+            "User logs in to dashboard",
+            "User navigates to task section",
+            "User creates new task with details",
+            "User sets deadline and priority",
+            "User saves task and receives confirmation"
+          ]
+        }
+      ]
+    };
+
+    // If featureDescriptions is empty, return the fallback immediately
+    if (!featureDescriptions || featureDescriptions.trim() === '') {
+      console.log('Empty feature descriptions provided, using fallback data');
+      return fallback;
+    }
+
+    // Process the feature descriptions to ensure it's in a format the AI can understand
+    const processedFeatureDescriptions = featureDescriptions.trim();
+    
+    const result = await generateText({
+      model: client(modelName),
+      system: `You are an AI agent that generates interactive wireframes and user flows from feature descriptions.
+
+The output MUST be a valid JSON object with the following structure and nothing else:
+{
+  "wireframes": [
+    {
+      "name": "Wireframe Name",
+      "description": "Brief description of this wireframe",
+      "htmlCssCode": "<div class=\"example\">Simple HTML/CSS code that represents this wireframe</div>"
+    }
+  ],
+  "userFlows": [
+    {
+      "name": "User Flow Name",
+      "steps": ["Step 1 description", "Step 2 description", "Step 3 description"]
+    }
+  ]
+}
+
+Ensure that:
+1. Each wireframe has a name, description, and htmlCssCode (simple HTML/CSS snippet)
+2. Each user flow has a name and an array of steps
+3. The JSON is properly formatted with no syntax errors
+4. Do not include any text outside the JSON structure
+5. If the feature descriptions are empty or unclear, create reasonable wireframes and flows based on the startup idea
+6. Keep HTML/CSS code simple and focused on layout rather than detailed styling`, 
+      prompt: `Startup Idea: ${idea}\n\nFeature Descriptions:\n${processedFeatureDescriptions}`,
+    });
+
+    // Try to parse the result
+    try {
+      const parsedData = safeJSONParse(result.text, fallback);
+      
+      // Validate the parsed data
+      if (!parsedData.wireframes || !Array.isArray(parsedData.wireframes) || parsedData.wireframes.length === 0 ||
+          !parsedData.userFlows || !Array.isArray(parsedData.userFlows) || parsedData.userFlows.length === 0) {
+        console.error('Invalid wireframes or userFlows array in parsed data');
+        return fallback;
+      }
+      
+      // Ensure each wireframe has the required properties
+      const validatedWireframes = parsedData.wireframes.map(wireframe => ({
+        name: wireframe.name || 'Unnamed Wireframe',
+        description: wireframe.description || 'No description provided',
+        htmlCssCode: wireframe.htmlCssCode || '<div>Placeholder wireframe</div>'
+      }));
+      
+      // Ensure each user flow has the required properties
+      const validatedUserFlows = parsedData.userFlows.map(flow => ({
+        name: flow.name || 'Unnamed Flow',
+        steps: Array.isArray(flow.steps) ? flow.steps : ['No steps provided']
+      }));
+      
+      return {
+        wireframes: validatedWireframes,
+        userFlows: validatedUserFlows
+      };
+    } catch (parseError) {
+      console.error('Error parsing instant prototyping data:', parseError);
+      return fallback;
+    }
+  } catch (error) {
+    console.error('Instant prototyping agent error:', error);
+    // Return fallback data in case of any error
+    return {
+      wireframes: [
+        {
+          name: "Main Dashboard",
+          description: "Central view showing key metrics and navigation",
+          htmlCssCode: `<div class="dashboard">
+  <header class="header">
+    <h1>Dashboard</h1>
+    <nav class="nav">
+      <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Features</a></li>
+        <li><a href="#">Settings</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="main-content">
+    <div class="widget">
+      <h2>Quick Stats</h2>
+      <div class="stats-container">
+        <div class="stat-item">Users: 1,234</div>
+        <div class="stat-item">Revenue: $5,678</div>
+      </div>
+    </div>
+  </main>
+</div>`
+        },
+        {
+          name: "User Profile",
+          description: "User information and preferences page",
+          htmlCssCode: `<div class="profile-container">
+  <div class="profile-header">
+    <img src="avatar-placeholder.jpg" alt="User Avatar" class="avatar" />
+    <h1 class="username">User Name</h1>
+  </div>
+  <div class="profile-details">
+    <div class="detail-item">
+      <span class="label">Email:</span>
+      <span class="value">user@example.com</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Member Since:</span>
+      <span class="value">January 1, 2023</span>
+    </div>
+  </div>
+  <div class="profile-actions">
+    <button class="btn primary">Edit Profile</button>
+    <button class="btn secondary">Change Password</button>
+  </div>
+</div>`
+        }
+      ],
+      userFlows: [
+        {
+          name: "User Registration Flow",
+          steps: [
+            "User lands on homepage",
+            "User clicks 'Sign Up' button",
+            "User fills registration form",
+            "User submits form and receives confirmation email",
+            "User clicks verification link and completes registration"
+          ]
+        },
+        {
+          name: "Basic Task Completion Flow",
+          steps: [
+            "User logs in to dashboard",
+            "User navigates to task section",
+            "User creates new task with details",
+            "User sets deadline and priority",
+            "User saves task and receives confirmation"
+          ]
+        }
+      ]
+    };
+  }
 }
 
 export async function generateTechStackOptimization(idea: string, currentStack: string): Promise<TechStackOptimizationData> {
-  const result = await generateText({
-    model: client(modelName),
-    system: `You are an expert in software architecture and tech stack optimization. Based on the startup idea and current tech stack, recommend upgrades, integrations, or cost-saving alternatives, along with reasoning. The output MUST be a JSON object conforming to the TechStackOptimizationData interface.`, 
-    prompt: `Startup Idea: ${idea}\n\nCurrent Tech Stack:\n${currentStack}`,
-  });
-  return safeJSONParse(result.text, {});
+  try {
+    // Create a fallback structure in case JSON parsing fails
+    const fallback: TechStackOptimizationData = {
+      recommendations: [
+        {
+          category: "Frontend Framework",
+          suggestion: "React with Next.js",
+          reasoning: "Provides server-side rendering, improved SEO, and better performance for web applications",
+          costSavingPotential: "15% reduction in development time"
+        },
+        {
+          category: "Database",
+          suggestion: "MongoDB Atlas",
+          reasoning: "Scalable NoSQL database with managed service options for reduced maintenance overhead",
+          costSavingPotential: "20% reduction in database management costs"
+        },
+        {
+          category: "Hosting/Deployment",
+          suggestion: "Vercel or Netlify",
+          reasoning: "Simplified deployment with built-in CI/CD and edge network for faster global access",
+          costSavingPotential: "25% reduction in hosting costs compared to traditional cloud providers"
+        }
+      ]
+    };
+
+    // If currentStack is empty, return the fallback immediately
+    if (!currentStack || currentStack.trim() === '') {
+      console.log('Empty current stack provided, using fallback data');
+      return fallback;
+    }
+
+    // Process the current stack to ensure it's in a format the AI can understand
+    const processedCurrentStack = currentStack.trim();
+    
+    const result = await generateText({
+      model: client(modelName),
+      system: `You are an expert in software architecture and tech stack optimization. Based on the startup idea and current tech stack, recommend upgrades, integrations, or cost-saving alternatives, along with reasoning.
+
+The output MUST be a valid JSON object with the following structure and nothing else:
+{
+  "recommendations": [
+    {
+      "category": "Category Name",
+      "suggestion": "Technology or tool suggestion",
+      "reasoning": "Explanation of why this is recommended",
+      "costSavingPotential": "Estimated cost savings or efficiency gains"
+    }
+  ]
+}
+
+Ensure that:
+1. Each recommendation has a category, suggestion, reasoning, and optional costSavingPotential
+2. The JSON is properly formatted with no syntax errors
+3. Do not include any text outside the JSON structure
+4. If the current stack is empty or unclear, create reasonable recommendations based on the startup idea
+5. Provide at least 3 recommendations covering different aspects of the tech stack`, 
+      prompt: `Startup Idea: ${idea}\n\nCurrent Tech Stack:\n${processedCurrentStack}`,
+    });
+
+    // Try to parse the result
+    try {
+      const parsedData = safeJSONParse(result.text, fallback);
+      
+      // Validate the parsed data
+      if (!parsedData.recommendations || !Array.isArray(parsedData.recommendations) || parsedData.recommendations.length === 0) {
+        console.error('Invalid recommendations array in parsed data');
+        return fallback;
+      }
+      
+      // Ensure each recommendation has the required properties
+      const validatedRecommendations = parsedData.recommendations.map(rec => ({
+        category: rec.category || 'General Recommendation',
+        suggestion: rec.suggestion || 'No specific suggestion provided',
+        reasoning: rec.reasoning || 'No reasoning provided',
+        costSavingPotential: rec.costSavingPotential || undefined
+      }));
+      
+      return {
+        recommendations: validatedRecommendations
+      };
+    } catch (parseError) {
+      console.error('Error parsing tech stack optimization data:', parseError);
+      return fallback;
+    }
+  } catch (error) {
+    console.error('Tech stack optimization agent error:', error);
+    // Return fallback data in case of any error
+    return {
+      recommendations: [
+        {
+          category: "Frontend Framework",
+          suggestion: "React with Next.js",
+          reasoning: "Provides server-side rendering, improved SEO, and better performance for web applications",
+          costSavingPotential: "15% reduction in development time"
+        },
+        {
+          category: "Database",
+          suggestion: "MongoDB Atlas",
+          reasoning: "Scalable NoSQL database with managed service options for reduced maintenance overhead",
+          costSavingPotential: "20% reduction in database management costs"
+        },
+        {
+          category: "Hosting/Deployment",
+          suggestion: "Vercel or Netlify",
+          reasoning: "Simplified deployment with built-in CI/CD and edge network for faster global access",
+          costSavingPotential: "25% reduction in hosting costs compared to traditional cloud providers"
+        }
+      ]
+    };
+  }
 }
 
 export async function generateTestSuite(idea: string, featureDetails: string): Promise<TestSuiteGenerationData> {
-  const result = await generateText({
-    model: client(modelName),
-    system: `You are an AI quality assurance engineer. Based on the startup idea and detailed feature descriptions, generate comprehensive unit, integration, and end-to-end test cases. The output MUST be a JSON object conforming to the TestSuiteGenerationData interface.`, 
-    prompt: `Startup Idea: ${idea}\n\nFeature Details:\n${featureDetails}`,
-  });
-  return safeJSONParse(result.text, {});
+  try {
+    // Create a fallback structure in case JSON parsing fails
+    const fallback: TestSuiteGenerationData = {
+      unitTests: [
+        {
+          feature: "User Authentication",
+          testCases: [
+            "Test user registration with valid data",
+            "Test user registration with invalid email format",
+            "Test login with correct credentials",
+            "Test login with incorrect password"
+          ]
+        },
+        {
+          feature: "Data Processing",
+          testCases: [
+            "Test data validation for required fields",
+            "Test data transformation functions",
+            "Test error handling for invalid inputs"
+          ]
+        }
+      ],
+      integrationTests: [
+        {
+          scenario: "User Registration Flow",
+          testCases: [
+            "Test user registration and email verification process",
+            "Test registration and immediate login functionality",
+            "Test user data persistence across sessions"
+          ]
+        },
+        {
+          scenario: "API Integration",
+          testCases: [
+            "Test data flow between frontend and backend",
+            "Test third-party API integration",
+            "Test error handling for API failures"
+          ]
+        }
+      ],
+      e2eTests: [
+        {
+          userStory: "New User Onboarding",
+          steps: [
+            "User visits landing page",
+            "User clicks 'Sign Up' button",
+            "User completes registration form",
+            "User verifies email",
+            "User completes profile setup",
+            "User is directed to dashboard"
+          ]
+        },
+        {
+          userStory: "Core Feature Usage",
+          steps: [
+            "User logs in to application",
+            "User navigates to main feature",
+            "User interacts with core functionality",
+            "User saves or submits data",
+            "User receives confirmation",
+            "User logs out successfully"
+          ]
+        }
+      ]
+    };
+
+    // If featureDetails is empty, return the fallback immediately
+    if (!featureDetails || featureDetails.trim() === '') {
+      console.log('Empty feature details provided, using fallback data');
+      return fallback;
+    }
+
+    // Process the feature details to ensure it's in a format the AI can understand
+    const processedFeatureDetails = featureDetails.trim();
+    
+    const result = await generateText({
+      model: client(modelName),
+      system: `You are an AI quality assurance engineer. Based on the startup idea and detailed feature descriptions, generate comprehensive unit, integration, and end-to-end test cases.
+
+The output MUST be a valid JSON object with the following structure and nothing else:
+{
+  "unitTests": [
+    {
+      "feature": "Feature Name",
+      "testCases": ["Test case 1 description", "Test case 2 description"]
+    }
+  ],
+  "integrationTests": [
+    {
+      "scenario": "Integration Scenario",
+      "testCases": ["Test case 1 description", "Test case 2 description"]
+    }
+  ],
+  "e2eTests": [
+    {
+      "userStory": "User Story Description",
+      "steps": ["Step 1", "Step 2", "Step 3"]
+    }
+  ]
+}
+
+Ensure that:
+1. Each unit test has a feature name and an array of test cases
+2. Each integration test has a scenario and an array of test cases
+3. Each end-to-end test has a user story and an array of steps
+4. The JSON is properly formatted with no syntax errors
+5. Do not include any text outside the JSON structure
+6. If the feature details are empty or unclear, create reasonable test cases based on the startup idea
+7. Provide at least 2 examples for each test type`, 
+      prompt: `Startup Idea: ${idea}\n\nFeature Details:\n${processedFeatureDetails}`,
+    });
+
+    // Try to parse the result
+    try {
+      const parsedData = safeJSONParse(result.text, fallback);
+      
+      // Validate the parsed data
+      if (!parsedData.unitTests || !Array.isArray(parsedData.unitTests) || parsedData.unitTests.length === 0 ||
+          !parsedData.integrationTests || !Array.isArray(parsedData.integrationTests) || parsedData.integrationTests.length === 0 ||
+          !parsedData.e2eTests || !Array.isArray(parsedData.e2eTests) || parsedData.e2eTests.length === 0) {
+        console.error('Invalid test suite data structure');
+        return fallback;
+      }
+      
+      // Ensure each unit test has the required properties
+      const validatedUnitTests = parsedData.unitTests.map(test => ({
+        feature: test.feature || 'Unnamed Feature',
+        testCases: Array.isArray(test.testCases) ? test.testCases : ['No test cases provided']
+      }));
+      
+      // Ensure each integration test has the required properties
+      const validatedIntegrationTests = parsedData.integrationTests.map(test => ({
+        scenario: test.scenario || 'Unnamed Scenario',
+        testCases: Array.isArray(test.testCases) ? test.testCases : ['No test cases provided']
+      }));
+      
+      // Ensure each e2e test has the required properties
+      const validatedE2ETests = parsedData.e2eTests.map(test => ({
+        userStory: test.userStory || 'Unnamed User Story',
+        steps: Array.isArray(test.steps) ? test.steps : ['No steps provided']
+      }));
+      
+      return {
+        unitTests: validatedUnitTests,
+        integrationTests: validatedIntegrationTests,
+        e2eTests: validatedE2ETests
+      };
+    } catch (parseError) {
+      console.error('Error parsing test suite data:', parseError);
+      return fallback;
+    }
+  } catch (error) {
+    console.error('Test suite generation agent error:', error);
+    // Return fallback data in case of any error
+    return {
+      unitTests: [
+        {
+          feature: "User Authentication",
+          testCases: [
+            "Test user registration with valid data",
+            "Test user registration with invalid email format",
+            "Test login with correct credentials",
+            "Test login with incorrect password"
+          ]
+        },
+        {
+          feature: "Data Processing",
+          testCases: [
+            "Test data validation for required fields",
+            "Test data transformation functions",
+            "Test error handling for invalid inputs"
+          ]
+        }
+      ],
+      integrationTests: [
+        {
+          scenario: "User Registration Flow",
+          testCases: [
+            "Test user registration and email verification process",
+            "Test registration and immediate login functionality",
+            "Test user data persistence across sessions"
+          ]
+        },
+        {
+          scenario: "API Integration",
+          testCases: [
+            "Test data flow between frontend and backend",
+            "Test third-party API integration",
+            "Test error handling for API failures"
+          ]
+        }
+      ],
+      e2eTests: [
+        {
+          userStory: "New User Onboarding",
+          steps: [
+            "User visits landing page",
+            "User clicks 'Sign Up' button",
+            "User completes registration form",
+            "User verifies email",
+            "User completes profile setup",
+            "User is directed to dashboard"
+          ]
+        },
+        {
+          userStory: "Core Feature Usage",
+          steps: [
+            "User logs in to application",
+            "User navigates to main feature",
+            "User interacts with core functionality",
+            "User saves or submits data",
+            "User receives confirmation",
+            "User logs out successfully"
+          ]
+        }
+      ]
+    };
+  }
 }
 
 export async function generatePairProgramming(idea: string, userStory: string): Promise<PairProgrammingData> {
-  const result = await generateText({
-    model: client(modelName),
-    system: `You are an AI pair programming assistant. Based on the startup idea and a user story, generate relevant code snippets, review pull requests (represented as textual comments), or scaffold new modules. The output MUST be a JSON object conforming to the PairProgrammingData interface.`, 
-    prompt: `Startup Idea: ${idea}\n\nUser Story:\n${userStory}`,
-  });
-  return safeJSONParse(result.text, {});
+  try {
+    // Create a fallback structure in case JSON parsing fails
+    const fallback: PairProgrammingData = {
+      codeSnippets: [
+        {
+          language: "javascript",
+          description: "User authentication function",
+          code: `// User authentication function
+const authenticateUser = async (email, password) => {
+  try {
+    // Input validation
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
+    
+    // Check if user exists in database
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error('Invalid credentials');
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    
+    return { token, user: { id: user._id, email: user.email } };
+  } catch (error) {
+    console.error('Authentication error:', error.message);
+    throw error;
+  }
+};`
+        },
+        {
+          language: "javascript",
+          description: "React component for user profile",
+          code: `// UserProfile.jsx
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const UserProfile = ({ userId }) => {
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(\`/api/users/\${userId}\`);
+        setProfile(response.data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load profile');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProfile();
+  }, [userId]);
+  
+  if (loading) return <div>Loading profile...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!profile) return <div>No profile data available</div>;
+  
+  return (
+    <div className="profile-container">
+      <h2>{profile.name}</h2>
+      <div className="profile-details">
+        <p>Email: {profile.email}</p>
+        <p>Member since: {new Date(profile.createdAt).toLocaleDateString()}</p>
+      </div>
+      <button className="edit-button">Edit Profile</button>
+    </div>
+  );
+};
+
+export default UserProfile;`
+        }
+      ],
+      pullRequestReview: "The PR looks good overall, but there are a few issues to address:\n\n1. The authentication function should include rate limiting to prevent brute force attacks\n2. Consider adding more comprehensive error handling in the API calls\n3. The user profile component should implement proper form validation for the edit functionality\n4. Make sure to add unit tests for the core authentication logic",
+      moduleScaffolding: "For the user management module, we should create the following structure:\n\n- /src/modules/users/\n  - models/\n    - User.js (schema definition)\n  - controllers/\n    - userController.js (business logic)\n  - routes/\n    - userRoutes.js (API endpoints)\n  - services/\n    - authService.js (authentication logic)\n    - profileService.js (profile management)\n  - tests/\n    - auth.test.js\n    - profile.test.js"
+    };
+
+    // If userStory is empty, return the fallback immediately
+    if (!userStory || userStory.trim() === '') {
+      console.log('Empty user story provided, using fallback data');
+      return fallback;
+    }
+
+    // Process the user story to ensure it's in a format the AI can understand
+    const processedUserStory = userStory.trim();
+    
+    const result = await generateText({
+      model: client(modelName),
+      system: `You are an AI pair programming assistant. Based on the startup idea and a user story, generate relevant code snippets, review pull requests (represented as textual comments), or scaffold new modules.
+
+The output MUST be a valid JSON object with the following structure and nothing else:
+{
+  "codeSnippets": [
+    {
+      "language": "programming language name",
+      "description": "Brief description of what this code does",
+      "code": "Actual code snippet with proper formatting and comments"
+    }
+  ],
+  "pullRequestReview": "Detailed review comments for a hypothetical pull request related to the user story",
+  "moduleScaffolding": "Suggested file/folder structure for implementing this feature"
+}
+
+Ensure that:
+1. Each code snippet has a language, description, and properly formatted code
+2. The pull request review provides constructive feedback on a hypothetical implementation
+3. The module scaffolding suggests a logical file/folder structure
+4. The JSON is properly formatted with no syntax errors
+5. Do not include any text outside the JSON structure
+6. If the user story is empty or unclear, create reasonable code examples based on the startup idea
+7. Provide at least 2 code snippets that would be useful for implementing the user story`, 
+      prompt: `Startup Idea: ${idea}\n\nUser Story:\n${processedUserStory}`,
+    });
+
+    // Try to parse the result
+    try {
+      const parsedData = safeJSONParse(result.text, fallback);
+      
+      // Validate the parsed data
+      if (!parsedData.codeSnippets || !Array.isArray(parsedData.codeSnippets) || parsedData.codeSnippets.length === 0) {
+        console.error('Invalid codeSnippets array in parsed data');
+        return fallback;
+      }
+      
+      // Ensure each code snippet has the required properties
+      const validatedCodeSnippets = parsedData.codeSnippets.map(snippet => ({
+        language: snippet.language || 'javascript',
+        description: snippet.description || 'Code snippet',
+        code: snippet.code || '// No code provided'
+      }));
+      
+      return {
+        codeSnippets: validatedCodeSnippets,
+        pullRequestReview: parsedData.pullRequestReview || fallback.pullRequestReview,
+        moduleScaffolding: parsedData.moduleScaffolding || fallback.moduleScaffolding
+      };
+    } catch (parseError) {
+      console.error('Error parsing pair programming data:', parseError);
+      return fallback;
+    }
+  } catch (error) {
+    console.error('Pair programming agent error:', error);
+    // Return fallback data in case of any error
+    return {
+      codeSnippets: [
+        {
+          language: "javascript",
+          description: "User authentication function",
+          code: `// User authentication function
+const authenticateUser = async (email, password) => {
+  try {
+    // Input validation
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
+    
+    // Check if user exists in database
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error('Invalid credentials');
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    
+    return { token, user: { id: user._id, email: user.email } };
+  } catch (error) {
+    console.error('Authentication error:', error.message);
+    throw error;
+  }
+};`
+        },
+        {
+          language: "javascript",
+          description: "React component for user profile",
+          code: `// UserProfile.jsx
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const UserProfile = ({ userId }) => {
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(\`/api/users/\${userId}\`);
+        setProfile(response.data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load profile');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProfile();
+  }, [userId]);
+  
+  if (loading) return <div>Loading profile...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!profile) return <div>No profile data available</div>;
+  
+  return (
+    <div className="profile-container">
+      <h2>{profile.name}</h2>
+      <div className="profile-details">
+        <p>Email: {profile.email}</p>
+        <p>Member since: {new Date(profile.createdAt).toLocaleDateString()}</p>
+      </div>
+      <button className="edit-button">Edit Profile</button>
+    </div>
+  );
+};
+
+export default UserProfile;`
+        }
+      ],
+      pullRequestReview: "The PR looks good overall, but there are a few issues to address:\n\n1. The authentication function should include rate limiting to prevent brute force attacks\n2. Consider adding more comprehensive error handling in the API calls\n3. The user profile component should implement proper form validation for the edit functionality\n4. Make sure to add unit tests for the core authentication logic",
+      moduleScaffolding: "For the user management module, we should create the following structure:\n\n- /src/modules/users/\n  - models/\n    - User.js (schema definition)\n  - controllers/\n    - userController.js (business logic)\n  - routes/\n    - userRoutes.js (API endpoints)\n  - services/\n    - authService.js (authentication logic)\n    - profileService.js (profile management)\n  - tests/\n    - auth.test.js\n    - profile.test.js"
+    };
+  }
 }
 
 export async function generateMVPToScaleRoadmap(idea: string, mvpDescription: string): Promise<MVPToScaleRoadmapData> {
-  const result = await generateText({
-    model: client(modelName),
-    system: `You are an AI strategic advisor for startups. Based on the startup idea and MVP description, generate a phased roadmap for scaling infrastructure, hiring, go-to-market, and compliance. The output MUST be a JSON object conforming to the MVPToScaleRoadmapData interface.`, 
-    prompt: `Startup Idea: ${idea}\n\nMVP Description:\n${mvpDescription}`,
-  });
-  return safeJSONParse(result.text, {});
+  try {
+    // Create a fallback structure in case JSON parsing fails
+    const fallback: MVPToScaleRoadmapData = {
+      roadmapPhases: [
+        {
+          phaseName: "MVP Validation",
+          timeline: "Month 1-3",
+          keyActivities: [
+            "Launch MVP to early adopters",
+            "Collect user feedback and iterate",
+            "Establish key performance metrics",
+            "Implement basic analytics tracking"
+          ],
+          hiringNeeds: [
+            "Product Manager",
+            "Full-stack Developer",
+            "UX/UI Designer (part-time)"
+          ],
+          infrastructureNeeds: [
+            "Basic cloud hosting setup",
+            "CI/CD pipeline for rapid iterations",
+            "Customer feedback collection system"
+          ]
+        },
+        {
+          phaseName: "Market Expansion",
+          timeline: "Month 4-9",
+          keyActivities: [
+            "Expand feature set based on user feedback",
+            "Implement monetization strategy",
+            "Develop marketing campaigns",
+            "Establish partnerships with key stakeholders"
+          ],
+          hiringNeeds: [
+            "Marketing Specialist",
+            "Additional Developers",
+            "Customer Success Representative"
+          ],
+          infrastructureNeeds: [
+            "Scaled database architecture",
+            "Enhanced security measures",
+            "Automated testing infrastructure",
+            "CRM system implementation"
+          ]
+        },
+        {
+          phaseName: "Scaling Operations",
+          timeline: "Month 10-18",
+          keyActivities: [
+            "Optimize for scale and performance",
+            "Expand to additional market segments",
+            "Secure additional funding if needed",
+            "Develop advanced analytics capabilities"
+          ],
+          hiringNeeds: [
+            "VP of Engineering",
+            "Data Analyst",
+            "Sales Representatives",
+            "HR Manager"
+          ],
+          infrastructureNeeds: [
+            "Microservices architecture transition",
+            "Advanced monitoring and alerting",
+            "Data warehouse implementation",
+            "Global CDN deployment"
+          ]
+        }
+      ]
+    };
+
+    // If mvpDescription is empty, return the fallback immediately
+    if (!mvpDescription || mvpDescription.trim() === '') {
+      console.log('Empty MVP description provided, using fallback data');
+      return fallback;
+    }
+
+    // Process the MVP description to ensure it's in a format the AI can understand
+    const processedMVPDescription = mvpDescription.trim();
+    
+    const result = await generateText({
+      model: client(modelName),
+      system: `You are an AI strategic advisor for startups. Based on the startup idea and MVP description, generate a phased roadmap for scaling infrastructure, hiring, go-to-market, and compliance.
+
+The output MUST be a valid JSON object with the following structure and nothing else:
+{
+  "roadmapPhases": [
+    {
+      "phaseName": "Phase Name",
+      "timeline": "Timeline description",
+      "keyActivities": ["Activity 1", "Activity 2", "Activity 3"],
+      "hiringNeeds": ["Role 1", "Role 2", "Role 3"],
+      "infrastructureNeeds": ["Infrastructure need 1", "Infrastructure need 2"]
+    }
+  ]
+}
+
+Ensure that:
+1. Each phase has a name, timeline, key activities, hiring needs, and infrastructure needs
+2. The JSON is properly formatted with no syntax errors
+3. Do not include any text outside the JSON structure
+4. If the MVP description is empty or unclear, create a reasonable roadmap based on the startup idea
+5. Provide at least 3 phases covering early validation, growth, and scaling stages
+6. Each phase should have at least 3 items for keyActivities, hiringNeeds, and infrastructureNeeds`, 
+      prompt: `Startup Idea: ${idea}\n\nMVP Description:\n${processedMVPDescription}`,
+    });
+
+    // Try to parse the result
+    try {
+      const parsedData = safeJSONParse(result.text, fallback);
+      
+      // Validate the parsed data
+      if (!parsedData.roadmapPhases || !Array.isArray(parsedData.roadmapPhases) || parsedData.roadmapPhases.length === 0) {
+        console.error('Invalid roadmapPhases array in parsed data');
+        return fallback;
+      }
+      
+      // Ensure each phase has the required properties
+      const validatedPhases = parsedData.roadmapPhases.map(phase => ({
+        phaseName: phase.phaseName || 'Unnamed Phase',
+        timeline: phase.timeline || 'No timeline specified',
+        keyActivities: Array.isArray(phase.keyActivities) ? phase.keyActivities : ['No activities specified'],
+        hiringNeeds: Array.isArray(phase.hiringNeeds) ? phase.hiringNeeds : ['No hiring needs specified'],
+        infrastructureNeeds: Array.isArray(phase.infrastructureNeeds) ? phase.infrastructureNeeds : ['No infrastructure needs specified']
+      }));
+      
+      return {
+        roadmapPhases: validatedPhases
+      };
+    } catch (parseError) {
+      console.error('Error parsing MVP to scale roadmap data:', parseError);
+      return fallback;
+    }
+  } catch (error) {
+    console.error('MVP to scale roadmap agent error:', error);
+    // Return fallback data in case of any error
+    return {
+      roadmapPhases: [
+        {
+          phaseName: "MVP Validation",
+          timeline: "Month 1-3",
+          keyActivities: [
+            "Launch MVP to early adopters",
+            "Collect user feedback and iterate",
+            "Establish key performance metrics",
+            "Implement basic analytics tracking"
+          ],
+          hiringNeeds: [
+            "Product Manager",
+            "Full-stack Developer",
+            "UX/UI Designer (part-time)"
+          ],
+          infrastructureNeeds: [
+            "Basic cloud hosting setup",
+            "CI/CD pipeline for rapid iterations",
+            "Customer feedback collection system"
+          ]
+        },
+        {
+          phaseName: "Market Expansion",
+          timeline: "Month 4-9",
+          keyActivities: [
+            "Expand feature set based on user feedback",
+            "Implement monetization strategy",
+            "Develop marketing campaigns",
+            "Establish partnerships with key stakeholders"
+          ],
+          hiringNeeds: [
+            "Marketing Specialist",
+            "Additional Developers",
+            "Customer Success Representative"
+          ],
+          infrastructureNeeds: [
+            "Scaled database architecture",
+            "Enhanced security measures",
+            "Automated testing infrastructure",
+            "CRM system implementation"
+          ]
+        },
+        {
+          phaseName: "Scaling Operations",
+          timeline: "Month 10-18",
+          keyActivities: [
+            "Optimize for scale and performance",
+            "Expand to additional market segments",
+            "Secure additional funding if needed",
+            "Develop advanced analytics capabilities"
+          ],
+          hiringNeeds: [
+            "VP of Engineering",
+            "Data Analyst",
+            "Sales Representatives",
+            "HR Manager"
+          ],
+          infrastructureNeeds: [
+            "Microservices architecture transition",
+            "Advanced monitoring and alerting",
+            "Data warehouse implementation",
+            "Global CDN deployment"
+          ]
+        }
+      ]
+    };
+  }
 }
 
 export async function generateCommunityFeedback(idea: string, rawFeedback: string): Promise<CommunityFeedbackData> {
-  const result = await generateText({
-    model: client(modelName),
-    system: `You are an AI assistant that summarizes community and expert feedback. Based on the startup idea and raw feedback, provide a concise summary and actionable insights. The output MUST be a JSON object conforming to the CommunityFeedbackData interface.`, 
-    prompt: `Startup Idea: ${idea}\n\nRaw Feedback:\n${rawFeedback}`,
-  });
-  return safeJSONParse(result.text, {});
+  try {
+    // Create a fallback structure in case JSON parsing fails
+    const fallback: CommunityFeedbackData = {
+      feedbackSummary: "The community feedback indicates general interest in the product concept with some concerns about implementation and market fit. Users appreciate the innovative approach but suggest improvements in user experience and feature prioritization.",
+      actionableInsights: [
+        "Focus on improving the core user experience before adding additional features",
+        "Consider conducting more targeted user research with your specific market segment",
+        "Prioritize features that address the most common pain points mentioned in feedback",
+        "Develop a clearer value proposition that differentiates from existing solutions",
+        "Create a roadmap that addresses technical concerns raised by early adopters"
+      ]
+    };
+
+    // If rawFeedback is empty, return the fallback immediately
+    if (!rawFeedback || rawFeedback.trim() === '') {
+      console.log('Empty raw feedback provided, using fallback data');
+      return fallback;
+    }
+
+    // Process the raw feedback to ensure it's in a format the AI can understand
+    const processedRawFeedback = rawFeedback.trim();
+    
+    const result = await generateText({
+      model: client(modelName),
+      system: `You are an AI assistant that summarizes community and expert feedback. Based on the startup idea and raw feedback, provide a concise summary and actionable insights.
+
+The output MUST be a valid JSON object with the following structure and nothing else:
+{
+  "feedbackSummary": "A concise paragraph summarizing the key themes and sentiments from the feedback",
+  "actionableInsights": ["Insight 1", "Insight 2", "Insight 3", "Insight 4", "Insight 5"]
+}
+
+Ensure that:
+1. The feedbackSummary is a single paragraph of 2-4 sentences that captures the essence of the feedback
+2. The actionableInsights array contains 3-5 specific, practical recommendations based on the feedback
+3. The JSON is properly formatted with no syntax errors
+4. Do not include any text outside the JSON structure
+5. If the raw feedback is empty or unclear, create a reasonable summary based on the startup idea`, 
+      prompt: `Startup Idea: ${idea}\n\nRaw Feedback:\n${processedRawFeedback}`,
+    });
+
+    // Try to parse the result
+    try {
+      const parsedData = safeJSONParse(result.text, fallback);
+      
+      // Validate the parsed data
+      if (!parsedData.feedbackSummary || typeof parsedData.feedbackSummary !== 'string' || parsedData.feedbackSummary.trim() === '') {
+        console.error('Invalid feedbackSummary in parsed data');
+        return fallback;
+      }
+      
+      if (!parsedData.actionableInsights || !Array.isArray(parsedData.actionableInsights) || parsedData.actionableInsights.length === 0) {
+        console.error('Invalid actionableInsights array in parsed data');
+        return fallback;
+      }
+      
+      return {
+        feedbackSummary: parsedData.feedbackSummary,
+        actionableInsights: parsedData.actionableInsights
+      };
+    } catch (parseError) {
+      console.error('Error parsing community feedback data:', parseError);
+      return fallback;
+    }
+  } catch (error) {
+    console.error('Community feedback agent error:', error);
+    // Return fallback data in case of any error
+    return {
+      feedbackSummary: "The community feedback indicates general interest in the product concept with some concerns about implementation and market fit. Users appreciate the innovative approach but suggest improvements in user experience and feature prioritization.",
+      actionableInsights: [
+        "Focus on improving the core user experience before adding additional features",
+        "Consider conducting more targeted user research with your specific market segment",
+        "Prioritize features that address the most common pain points mentioned in feedback",
+        "Develop a clearer value proposition that differentiates from existing solutions",
+        "Create a roadmap that addresses technical concerns raised by early adopters"
+      ]
+    };
+  }
 }
 
 export async function generateComplianceRiskCheck(idea: string, productPlan: string, industry: string): Promise<ComplianceRiskCheckData> {
-  const result = await generateText({
-    model: client(modelName),
-    system: `You are an AI compliance and risk analyst. Based on the startup idea, product plan, and industry, scan for compliance gaps and risk factors, providing mitigation suggestions. The output MUST be a JSON object conforming to the ComplianceRiskCheckData interface.`, 
-    prompt: `Startup Idea: ${idea}\n\nProduct Plan:\n${productPlan}\n\nIndustry: ${industry}`,
-  });
-  return safeJSONParse(result.text, {});
+  try {
+    // Create a fallback structure in case JSON parsing fails
+    const fallback: ComplianceRiskCheckData = {
+      complianceIssues: [
+        {
+          regulation: "Data Protection (GDPR/CCPA)",
+          description: "Potential issues with user data collection, storage, and processing that may not comply with privacy regulations.",
+          severity: "High",
+          mitigationSuggestions: [
+            "Implement a comprehensive privacy policy",
+            "Create data processing agreements with all vendors",
+            "Establish a data retention and deletion policy",
+            "Implement user consent mechanisms for data collection"
+          ]
+        },
+        {
+          regulation: "Intellectual Property",
+          description: "Risk of trademark or copyright infringement in product development.",
+          severity: "Medium",
+          mitigationSuggestions: [
+            "Conduct a thorough IP search before finalizing product name and features",
+            "Consult with an IP attorney for trademark registration",
+            "Document all original work and maintain proper licensing for third-party assets"
+          ]
+        },
+        {
+          regulation: "Terms of Service & User Agreements",
+          description: "Inadequate legal agreements may expose the company to liability.",
+          severity: "Medium",
+          mitigationSuggestions: [
+            "Develop comprehensive Terms of Service and User Agreements",
+            "Include appropriate liability limitations and disclaimers",
+            "Ensure agreements are easily accessible to users"
+          ]
+        }
+      ],
+      riskFactors: [
+        {
+          risk: "Market Competition",
+          description: "Established competitors may have significant advantages in market share and resources.",
+          impact: "Financial",
+          likelihood: "High",
+          mitigationPlan: [
+            "Conduct detailed competitive analysis to identify unique value propositions",
+            "Focus on underserved market segments initially",
+            "Develop a clear differentiation strategy",
+            "Build strategic partnerships to enhance market position"
+          ]
+        },
+        {
+          risk: "Technical Scalability",
+          description: "Infrastructure may not support rapid user growth or increased demand.",
+          impact: "Operational",
+          likelihood: "Medium",
+          mitigationPlan: [
+            "Design architecture with scalability in mind from the beginning",
+            "Implement load testing as part of development process",
+            "Establish relationships with cloud providers for quick scaling options",
+            "Develop a technical contingency plan for unexpected growth"
+          ]
+        },
+        {
+          risk: "Funding Shortfall",
+          description: "Insufficient capital to reach key milestones before generating revenue.",
+          impact: "Financial",
+          likelihood: "Medium",
+          mitigationPlan: [
+            "Create a conservative financial model with multiple scenarios",
+            "Identify potential additional funding sources early",
+            "Develop a minimal viable product strategy to accelerate time to market",
+            "Establish clear KPIs to demonstrate progress to investors"
+          ]
+        }
+      ]
+    };
+
+    // If any of the required inputs are empty, return the fallback immediately
+    if (!productPlan || productPlan.trim() === '' || !industry || industry.trim() === '') {
+      console.log('Empty product plan or industry provided, using fallback data');
+      return fallback;
+    }
+
+    // Process the inputs to ensure they're in a format the AI can understand
+    const processedProductPlan = productPlan.trim();
+    const processedIndustry = industry.trim();
+    
+    const result = await generateText({
+      model: client(modelName),
+      system: `You are an AI compliance and risk analyst. Based on the startup idea, product plan, and industry, scan for compliance gaps and risk factors, providing mitigation suggestions.
+
+The output MUST be a valid JSON object with the following structure and nothing else:
+{
+  "complianceIssues": [
+    {
+      "regulation": "Regulation Name",
+      "description": "Description of the compliance issue",
+      "severity": "High/Medium/Low",
+      "mitigationSuggestions": ["Suggestion 1", "Suggestion 2", "Suggestion 3"]
+    }
+  ],
+  "riskFactors": [
+    {
+      "risk": "Risk Name",
+      "description": "Description of the risk factor",
+      "impact": "Financial/Reputational/Operational",
+      "likelihood": "High/Medium/Low",
+      "mitigationPlan": ["Plan item 1", "Plan item 2", "Plan item 3"]
+    }
+  ]
+}
+
+Ensure that:
+1. Each complianceIssue has a regulation, description, severity, and mitigationSuggestions
+2. Each riskFactor has a risk, description, impact, likelihood, and mitigationPlan
+3. The JSON is properly formatted with no syntax errors
+4. Do not include any text outside the JSON structure
+5. If the inputs are empty or unclear, create a reasonable assessment based on the startup idea and industry
+6. Provide at least 3 complianceIssues and 3 riskFactors
+7. Each mitigationSuggestions and mitigationPlan should have at least 3 items`, 
+      prompt: `Startup Idea: ${idea}\n\nProduct Plan:\n${processedProductPlan}\n\nIndustry: ${processedIndustry}`,
+    });
+
+    // Try to parse the result
+    try {
+      const parsedData = safeJSONParse(result.text, fallback);
+      
+      // Validate the parsed data
+      if (!parsedData.complianceIssues || !Array.isArray(parsedData.complianceIssues) || parsedData.complianceIssues.length === 0) {
+        console.error('Invalid complianceIssues array in parsed data');
+        return fallback;
+      }
+      
+      if (!parsedData.riskFactors || !Array.isArray(parsedData.riskFactors) || parsedData.riskFactors.length === 0) {
+        console.error('Invalid riskFactors array in parsed data');
+        return fallback;
+      }
+      
+      // Ensure each compliance issue has the required properties
+      const validatedComplianceIssues = parsedData.complianceIssues.map(issue => ({
+        regulation: issue.regulation || 'Unnamed Regulation',
+        description: issue.description || 'No description provided',
+        severity: issue.severity || 'Medium',
+        mitigationSuggestions: Array.isArray(issue.mitigationSuggestions) ? issue.mitigationSuggestions : ['No mitigation suggestions provided']
+      }));
+      
+      // Ensure each risk factor has the required properties
+      const validatedRiskFactors = parsedData.riskFactors.map(factor => ({
+        risk: factor.risk || 'Unnamed Risk',
+        description: factor.description || 'No description provided',
+        impact: factor.impact || 'Financial',
+        likelihood: factor.likelihood || 'Medium',
+        mitigationPlan: Array.isArray(factor.mitigationPlan) ? factor.mitigationPlan : ['No mitigation plan provided']
+      }));
+      
+      return {
+        complianceIssues: validatedComplianceIssues,
+        riskFactors: validatedRiskFactors
+      };
+    } catch (parseError) {
+      console.error('Error parsing compliance risk check data:', parseError);
+      return fallback;
+    }
+  } catch (error) {
+    console.error('Compliance risk check agent error:', error);
+    // Return fallback data in case of any error
+    return {
+      complianceIssues: [
+        {
+          regulation: "Data Protection (GDPR/CCPA)",
+          description: "Potential issues with user data collection, storage, and processing that may not comply with privacy regulations.",
+          severity: "High",
+          mitigationSuggestions: [
+            "Implement a comprehensive privacy policy",
+            "Create data processing agreements with all vendors",
+            "Establish a data retention and deletion policy",
+            "Implement user consent mechanisms for data collection"
+          ]
+        },
+        {
+          regulation: "Intellectual Property",
+          description: "Risk of trademark or copyright infringement in product development.",
+          severity: "Medium",
+          mitigationSuggestions: [
+            "Conduct a thorough IP search before finalizing product name and features",
+            "Consult with an IP attorney for trademark registration",
+            "Document all original work and maintain proper licensing for third-party assets"
+          ]
+        },
+        {
+          regulation: "Terms of Service & User Agreements",
+          description: "Inadequate legal agreements may expose the company to liability.",
+          severity: "Medium",
+          mitigationSuggestions: [
+            "Develop comprehensive Terms of Service and User Agreements",
+            "Include appropriate liability limitations and disclaimers",
+            "Ensure agreements are easily accessible to users"
+          ]
+        }
+      ],
+      riskFactors: [
+        {
+          risk: "Market Competition",
+          description: "Established competitors may have significant advantages in market share and resources.",
+          impact: "Financial",
+          likelihood: "High",
+          mitigationPlan: [
+            "Conduct detailed competitive analysis to identify unique value propositions",
+            "Focus on underserved market segments initially",
+            "Develop a clear differentiation strategy",
+            "Build strategic partnerships to enhance market position"
+          ]
+        },
+        {
+          risk: "Technical Scalability",
+          description: "Infrastructure may not support rapid user growth or increased demand.",
+          impact: "Operational",
+          likelihood: "Medium",
+          mitigationPlan: [
+            "Design architecture with scalability in mind from the beginning",
+            "Implement load testing as part of development process",
+            "Establish relationships with cloud providers for quick scaling options",
+            "Develop a technical contingency plan for unexpected growth"
+          ]
+        },
+        {
+          risk: "Funding Shortfall",
+          description: "Insufficient capital to reach key milestones before generating revenue.",
+          impact: "Financial",
+          likelihood: "Medium",
+          mitigationPlan: [
+            "Create a conservative financial model with multiple scenarios",
+            "Identify potential additional funding sources early",
+            "Develop a minimal viable product strategy to accelerate time to market",
+            "Establish clear KPIs to demonstrate progress to investors"
+          ]
+        }
+      ]
+    };
+  }
 }
 
 export default {

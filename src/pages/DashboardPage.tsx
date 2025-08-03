@@ -98,13 +98,62 @@ const DashboardPage: React.FC = () => {
       case 'build':
         // For build goal, run research and builder agents, plus new build agents
         await triggerResearchAgent(startup.id, startup.idea);
-        await triggerBuilderAgent(startup.id, startup.idea);
-        await triggerFeaturePrioritizationAgent(startup.id, startup.idea, ''); // Placeholder backlog
-        await triggerInstantPrototypingAgent(startup.id, startup.idea, ''); // Placeholder featureDescriptions
-        await triggerTechStackOptimizationAgent(startup.id, startup.idea, ''); // Placeholder currentStack
-        await triggerTestSuiteGenerationAgent(startup.id, startup.idea, ''); // Placeholder featureDetails
-        await triggerPairProgrammingAgent(startup.id, startup.idea, ''); // Placeholder userStory
-        await triggerMVPToScaleRoadmapAgent(startup.id, startup.idea, ''); // Placeholder mvpDescription
+        
+        // Run builder agent and get MVP features
+        const builderData = await triggerBuilderAgent(startup.id, startup.idea);
+        
+        // Generate backlog from builder features
+        let featureBacklog = '';
+        if (builderData && builderData.features && builderData.features.length > 0) {
+          featureBacklog = builderData.features.map(feature => 
+            `${feature.name}: ${feature.description} (Priority: ${feature.priority})`
+          ).join('\n');
+        }
+        
+        // Generate feature descriptions for prototyping
+        let featureDescriptions = featureBacklog;
+        
+        // Use tech stack from builder data
+        let currentStack = '';
+        if (builderData && builderData.techStack) {
+          currentStack = Object.entries(builderData.techStack)
+            .map(([category, technologies]) => 
+              `${category}: ${technologies.join(', ')}`
+            ).join('\n');
+        }
+        
+        // Use feature details for test suite
+        let featureDetails = featureBacklog;
+        if (builderData && builderData.innovations) {
+          featureDetails += '\n\nInnovations:\n' + 
+            builderData.innovations.map(innovation => `- ${innovation}`).join('\n');
+        }
+        
+        // Generate user story for pair programming
+        let userStory = `As a user of ${startup.name}, I want to ${builderData?.features?.[0]?.description.toLowerCase() || 'use the core functionality'} so that I can achieve my goals.`;
+        
+        // Generate MVP description for roadmap
+        let mvpDescription = '';
+        if (builderData) {
+          mvpDescription = `MVP for ${startup.name} includes:\n\n` +
+            `Core Features:\n${featureBacklog}\n\n` +
+            `Tech Stack:\n${currentStack}`;
+          
+          if (builderData.roadmap && builderData.roadmap.length > 0) {
+            mvpDescription += '\n\nRoadmap:\n' + 
+              builderData.roadmap.map(phase => 
+                `${phase.phase} (${phase.timeline}): ${phase.deliverables.join(', ')}`
+              ).join('\n');
+          }
+        }
+        
+        // Run the remaining agents with the generated data
+        await triggerFeaturePrioritizationAgent(startup.id, startup.idea, featureBacklog);
+        await triggerInstantPrototypingAgent(startup.id, startup.idea, featureDescriptions);
+        await triggerTechStackOptimizationAgent(startup.id, startup.idea, currentStack);
+        await triggerTestSuiteGenerationAgent(startup.id, startup.idea, featureDetails);
+        await triggerPairProgrammingAgent(startup.id, startup.idea, userStory);
+        await triggerMVPToScaleRoadmapAgent(startup.id, startup.idea, mvpDescription);
         await triggerCommunityFeedbackAgent(startup.id, startup.idea, ''); // Placeholder rawFeedback
         await triggerComplianceRiskCheckAgent(startup.id, startup.projectDetails, startup.industry, startup.targetRegulations);
         break;

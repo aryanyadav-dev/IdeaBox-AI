@@ -6,9 +6,10 @@ interface ValidationCardProps {
   data: any;
   status: 'idle' | 'running' | 'completed' | 'error';
   onRun: () => void;
+  error?: string;
 }
 
-const ValidationCard: React.FC<ValidationCardProps> = ({ data, status, onRun }) => {
+const ValidationCard: React.FC<ValidationCardProps> = ({ data, status, onRun, error }) => {
   // Add console log to debug the data structure
   useEffect(() => {
     if (status === 'completed' && data) {
@@ -73,7 +74,7 @@ const ValidationCard: React.FC<ValidationCardProps> = ({ data, status, onRun }) 
           </div>
           
           <div className="bg-red-50 border border-red-200 rounded-md p-4 text-red-700 text-sm">
-            An error occurred while running the validator agent. Please try again.
+            {error || 'An error occurred while running the validator agent. Please try again.'}
           </div>
         </div>
       </div>

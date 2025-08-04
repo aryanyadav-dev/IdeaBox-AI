@@ -512,6 +512,7 @@ const DashboardPage: React.FC = () => {
                   status={agentStatus.validator} 
             data={agentData.validator} 
             onRun={() => triggerValidatorAgent(startup.id, startup.idea)}
+            error={agentErrors.validator instanceof Error ? agentErrors.validator.message : agentErrors.validator || undefined}
                 />
                 <MVPCard 
                   status={agentStatus.builder} 

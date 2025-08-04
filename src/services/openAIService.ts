@@ -566,7 +566,7 @@ export async function validateBusinessIdea(idea: string): Promise<ValidationData
     return parsedData;
   } catch (error) {
     console.error('Error validating business idea:', error);
-    throw new Error('Failed to get validation from AI.');
+    throw new Error(`Failed to get validation from AI: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -1596,8 +1596,16 @@ Ensure that:
         return fallback;
       }
       
+      // Define an interface for the feature structure
+      interface PrioritizedFeature {
+        name?: string;
+        description?: string;
+        score?: number;
+        reasoning?: string;
+      }
+
       // Ensure each feature has the required properties
-      const validatedFeatures = parsedData.prioritizedFeatures.map(feature => ({
+      const validatedFeatures = parsedData.prioritizedFeatures.map((feature: PrioritizedFeature) => ({
         name: feature.name || 'Unnamed Feature',
         description: feature.description || 'No description provided',
         score: typeof feature.score === 'number' ? feature.score : 50,
@@ -1769,15 +1777,28 @@ Ensure that:
         return fallback;
       }
       
+      // Define an interface for the wireframe structure
+      interface Wireframe {
+        name?: string;
+        description?: string;
+      }
+
       // Ensure each wireframe has the required properties
-      const validatedWireframes = parsedData.wireframes.map(wireframe => ({
+      const validatedWireframes = parsedData.wireframes.map((wireframe: Wireframe) => ({
         name: wireframe.name || 'Unnamed Wireframe',
         description: wireframe.description || 'No description provided',
         htmlCssCode: wireframe.htmlCssCode || '<div>Placeholder wireframe</div>'
       }));
       
+      // Define an interface for the user flow structure
+      interface UserFlow {
+        name?: string;
+        description?: string;
+        steps?: string[];
+      }
+
       // Ensure each user flow has the required properties
-      const validatedUserFlows = parsedData.userFlows.map(flow => ({
+      const validatedUserFlows = parsedData.userFlows.map((flow: UserFlow) => ({
         name: flow.name || 'Unnamed Flow',
         steps: Array.isArray(flow.steps) ? flow.steps : ['No steps provided']
       }));
@@ -1941,8 +1962,16 @@ Ensure that:
         return fallback;
       }
       
+      // Define an interface for the recommendation structure
+      interface Recommendation {
+        category?: string;
+        suggestion?: string;
+        reasoning?: string;
+        costSavingPotential?: string;
+      }
+
       // Ensure each recommendation has the required properties
-      const validatedRecommendations = parsedData.recommendations.map(rec => ({
+      const validatedRecommendations = parsedData.recommendations.map((rec: Recommendation) => ({
         category: rec.category || 'General Recommendation',
         suggestion: rec.suggestion || 'No specific suggestion provided',
         reasoning: rec.reasoning || 'No reasoning provided',
@@ -2109,20 +2138,38 @@ Ensure that:
         return fallback;
       }
       
+      // Define an interface for the unit test structure
+      interface UnitTest {
+        feature?: string;
+        testCases?: string[];
+      }
+
       // Ensure each unit test has the required properties
-      const validatedUnitTests = parsedData.unitTests.map(test => ({
+      const validatedUnitTests = parsedData.unitTests.map((test: UnitTest) => ({
         feature: test.feature || 'Unnamed Feature',
         testCases: Array.isArray(test.testCases) ? test.testCases : ['No test cases provided']
       }));
       
+      // Define an interface for the integration test structure
+      interface IntegrationTest {
+        scenario?: string;
+        testCases?: string[];
+      }
+
       // Ensure each integration test has the required properties
-      const validatedIntegrationTests = parsedData.integrationTests.map(test => ({
+      const validatedIntegrationTests = parsedData.integrationTests.map((test: IntegrationTest) => ({
         scenario: test.scenario || 'Unnamed Scenario',
         testCases: Array.isArray(test.testCases) ? test.testCases : ['No test cases provided']
       }));
       
+      // Define an interface for the e2e test structure
+      interface E2ETest {
+        userStory?: string;
+        steps?: string[];
+      }
+
       // Ensure each e2e test has the required properties
-      const validatedE2ETests = parsedData.e2eTests.map(test => ({
+      const validatedE2ETests = parsedData.e2eTests.map((test: E2ETest) => ({
         userStory: test.userStory || 'Unnamed User Story',
         steps: Array.isArray(test.steps) ? test.steps : ['No steps provided']
       }));

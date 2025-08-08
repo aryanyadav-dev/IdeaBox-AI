@@ -7,6 +7,7 @@ import { RotateCw, TrendingUp } from 'lucide-react';
 import { useAgentContext } from '../../context/AgentContext';
 import { GrowthOpportunityData } from '../../services/openAIService';
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
 
 interface GrowthOpportunityCardProps {
   startupId: string;
@@ -18,12 +19,18 @@ const GrowthOpportunityCard: React.FC<GrowthOpportunityCardProps> = ({ startupId
   const { agentStatus, agentData, agentErrors, triggerGrowthAgent } = useAgentContext();
   const [productMarketUserData, setProductMarketUserData] = useState('');
 
+  useEffect(() => {
+    if (agentData.growth?.productMarketUserDataSummary) {
+      setProductMarketUserData(agentData.growth.productMarketUserDataSummary);
+    }
+  }, [agentData.growth?.productMarketUserDataSummary]);
+
   const growthData = agentData.growth as GrowthOpportunityData | null;
   const status = agentStatus.growth;
   const error = agentErrors.growth;
 
   const handleRunAnalysis = async () => {
-    await triggerGrowthAgent(startupId, startupIdea, { data: productMarketUserData });
+    await triggerGrowthAgent(startupId, startupIdea, productMarketUserData);
   };
 
   return (
@@ -76,53 +83,48 @@ const GrowthOpportunityCard: React.FC<GrowthOpportunityCardProps> = ({ startupId
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4 text-gray-700"
           >
-            <h3 className="text-md font-semibold text-gray-900">New Market Segments:</h3>
+            <h3 className="text-md font-semibold text-gray-900">Summary:</h3>
+            <p className="text-sm whitespace-pre-wrap">{growthData.summary}</p>
+
+            <h3 className="text-md font-semibold text-gray-900">Normalized Inputs:</h3>
+            <p className="text-sm">Currency: {growthData.normalizedInputs.currency}, Time Unit: {growthData.normalizedInputs.timeUnit}</p>
+
+            <h3 className="text-md font-semibold text-gray-900">Growth Metrics:</h3>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li><strong>Customer Acquisition Cost (CAC):</strong> {growthData.growthMetrics.customerAcquisitionCost}</li>
+              <li><strong>Customer Lifetime Value (CLV):</strong> {growthData.growthMetrics.customerLifetimeValue}</li>
+              <li><strong>Churn Rate:</strong> {growthData.growthMetrics.churnRate}</li>
+              <li><strong>Conversion Rate:</strong> {growthData.growthMetrics.conversionRate}</li>
+            </ul>
+
+            <h3 className="text-md font-semibold text-gray-900">Growth Projections:</h3>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li><strong>Monthly Active Users (MAU):</strong> {growthData.growthProjections.monthlyActiveUsers}</li>
+              <li><strong>Monthly Recurring Revenue (MRR):</strong> {growthData.growthProjections.monthlyRecurringRevenue}</li>
+              <li><strong>Average Revenue Per User (ARPU):</strong> {growthData.growthProjections.averageRevenuePerUser}</li>
+            </ul>
+
+            <h3 className="text-md font-semibold text-gray-900">Scenarios:</h3>
             <ul className="list-disc pl-5 space-y-2">
-              {growthData.marketSegments.map((segment, index) => (
+              {growthData.scenarios.map((scenario, index) => (
                 <li key={index}>
-                  <p className="font-medium">{segment.name} (Score: {segment.opportunityScore}/10)</p>
-                  <p className="text-sm">{segment.description}</p>
+                  <p className="font-medium">{scenario.name}</p>
+                  <p className="text-sm whitespace-pre-wrap">{scenario.description}</p>
+                  <p className="text-sm font-medium">Projected Growth: {scenario.projectedGrowth}</p>
                 </li>
               ))}
             </ul>
 
-            <h3 className="text-md font-semibold text-gray-900">Upsell/Cross-Sell Opportunities:</h3>
-            <ul className="list-disc pl-5 space-y-2">
-              {growthData.upsellCrossSell.map((opp, index) => (
-                <li key={index}>{opp}</li>
-              ))}
-            </ul>
-
-            <h3 className="text-md font-semibold text-gray-900">Expansion Strategies:</h3>
-            <ul className="list-disc pl-5 space-y-2">
-              {growthData.expansionStrategies.map((strategy, index) => (
-                <li key={index}>{strategy}</li>
-              ))}
-            </ul>
-
-            <h3 className="text-md font-semibold text-gray-900">Benchmarking:</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Your Value</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Industry Average</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Top Competitor</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {growthData.benchmarking.map((benchmark, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{benchmark.metric}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{benchmark.yourValue}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{benchmark.industryAverage}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{benchmark.topCompetitor}</td>
-                    </tr>
+            {growthData.sanityChecks && growthData.sanityChecks.length > 0 && (
+              <>
+                <h3 className="text-md font-semibold text-gray-900">Sanity Checks:</h3>
+                <ul className="list-disc pl-5 space-y-1 text-sm">
+                  {growthData.sanityChecks.map((check, index) => (
+                    <li key={index}>{check}</li>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </ul>
+              </>
+            )}
           </motion.div>
         )}
 
@@ -136,4 +138,4 @@ const GrowthOpportunityCard: React.FC<GrowthOpportunityCardProps> = ({ startupId
   );
 };
 
-export default GrowthOpportunityCard; 
+export default GrowthOpportunityCard;

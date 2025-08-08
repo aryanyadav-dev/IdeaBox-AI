@@ -208,32 +208,46 @@ export interface InvestorInsightsData {
 
 // New Interfaces for Evaluate Goal - Input interfaces are no longer needed
 export interface RunwayAnalysisData {
-  projection: {
-    months: number;
-    cashAtEndOfRunway: string;
-  };
+  grossBurn: number;
+  netBurn: number;
+  cashOnHand: number;
+  monthlyRevenue: number;
+  monthlyExpenses: number;
+  runwayMonths: number;
+  runwayCalculation: string;
   scenarios: {
     name: string;
     description: string;
     impact: string;
   }[];
-  optimizations: string[];
+  sanityChecks: string[];
+  summary: string;
 }
 
 export interface GrowthOpportunityData {
-  marketSegments: {
+  productMarketUserDataSummary?: string;
+  normalizedInputs: {
+    currency: string;
+    timeUnit: string;
+  };
+  growthMetrics: {
+    customerAcquisitionCost: number;
+    customerLifetimeValue: number;
+    churnRate: number;
+    conversionRate: number;
+  };
+  growthProjections: {
+    monthlyActiveUsers: number;
+    monthlyRecurringRevenue: number;
+    averageRevenuePerUser: number;
+  };
+  scenarios: {
     name: string;
     description: string;
-    opportunityScore: number;
+    projectedGrowth: string;
   }[];
-  upsellCrossSell: string[];
-  expansionStrategies: string[];
-  benchmarking: {
-    metric: string;
-    yourValue: string;
-    industryAverage: string;
-    topCompetitor: string;
-  }[];
+  sanityChecks: string[];
+  summary: string;
 }
 
 export interface InvestorStrategyData {
@@ -325,24 +339,28 @@ export interface TestSuiteGenerationData {
   }[];
 }
 
+export interface CodeSnippet {
+  language: string;
+  description: string;
+  code: string;
+}
+
 export interface PairProgrammingData {
-  codeSnippets: {
-    language: string;
-    description: string;
-    code: string;
-  }[];
+  codeSnippets: CodeSnippet[];
   pullRequestReview: string;
   moduleScaffolding: string;
 }
 
+export interface RoadmapPhase {
+  phaseName: string;
+  timeline: string; // e.g., 'Q1 2025 - Q2 2025'
+  keyActivities: string[];
+  hiringNeeds: string[];
+  infrastructureNeeds: string[];
+}
+
 export interface MVPToScaleRoadmapData {
-  roadmapPhases: {
-    phaseName: string;
-    timeline: string; // e.g., 'Q1 2025 - Q2 2025'
-    keyActivities: string[];
-    hiringNeeds: string[];
-    infrastructureNeeds: string[];
-  }[];
+  roadmapPhases: RoadmapPhase[];
 }
 
 export interface CommunityFeedbackData {
@@ -350,20 +368,24 @@ export interface CommunityFeedbackData {
   actionableInsights: string[];
 }
 
+export interface ComplianceIssue {
+  regulation: string;
+  description: string;
+  severity: string; // e.g., 'High', 'Medium', 'Low'
+  mitigationSuggestions: string[];
+}
+
+export interface RiskFactor {
+  risk: string;
+  description: string;
+  impact: string; // e.g., 'Financial', 'Reputational', 'Operational'
+  likelihood: string; // e.g., 'High', 'Medium', 'Low'
+  mitigationPlan: string[];
+}
+
 export interface ComplianceRiskCheckData {
-  complianceIssues: {
-    regulation: string;
-    description: string;
-    severity: string; // e.g., 'High', 'Medium', 'Low'
-    mitigationSuggestions: string[];
-  }[];
-  riskFactors: {
-    risk: string;
-    description: string;
-    impact: string; // e.g., 'Financial', 'Reputational', 'Operational'
-    likelihood: string; // e.g., 'High', 'Medium', 'Low'
-    mitigationPlan: string[];
-  }[];
+  complianceIssues: ComplianceIssue[];
+  riskFactors: RiskFactor[];
 }
 
 // Configure API connection using pattern from the video
@@ -1279,18 +1301,39 @@ export async function generateRunwayAnalysis(startupIdea: string, startupName: s
         4.  **Structure Output**: Return a detailed analysis in a valid JSON object. Do not include any text outside the JSON object.
         
         The JSON object should conform to the following structure:
-        -   **projection**: An object detailing the estimated runway.
-            -   **months** (number): The estimated number of months until cash runs out.
-            -   **cashAtEndOfRunway** (string): A brief summary of the projected financial state at the end of the runway.
-        -   **scenarios**: An array of objects outlining potential best-case and worst-case scenarios.
-            -   **name** (string): e.g., "Achieving Profitability", "Emergency Funding Round".
-            -   **description** (string): A description of the scenario.
-            -   **impact** (string): The potential impact on the runway.
-        -   **optimizations**: An array of strings with actionable recommendations to extend the runway (e.g., "Reduce marketing spend", "Accelerate sales cycle").
+        -   **grossBurn** (number): Estimated monthly gross burn (monthly expenses).
+        -   **netBurn** (number): Estimated monthly net burn (monthly expenses - monthly revenue).
+        -   **cashOnHand** (number): Estimated current cash on hand.
+        -   **monthlyRevenue** (number): Estimated monthly revenue.
+        -   **monthlyExpenses** (number): Estimated monthly expenses.
+        -   **runwayMonths** (number): The estimated number of months until cash runs out.
+        -   **runwayCalculation** (string): Step-by-step arithmetic for runway calculation.
+        -   **scenarios**: An array of objects, each describing a potential financial scenario.
+            -   **name** (string): Name of the scenario (e.g., "Emergency Funding", "Expense Reduction").
+            -   **description** (string): Detailed description of the scenario and its impact, including step-by-step arithmetic.
+            -   **impact** (string): Quantified impact on runway (e.g., "+3 months", "-1 month").
+        -   **sanityChecks** (array): An array of strings, each describing a sanity check performed and any warnings. This should include:
+            - Explicit assumptions made (e.g., scenarios are one-time / immediate changes, not monthly compounding growth). If revenue growth is gradual, runway changes gradually — not instantly.
+            - Inclusion of non-recurring items (debt service, taxes, one-time hires, M&A costs) which can materially change runway.
+            - Currency / unit checks: always validate currency and whether inputs were monthly or annual.
+            - Near-breakeven warning: if net burn is very small, small input errors produce very large runway swings — flag this.
+            - Break out expense buckets (payroll vs. hosting vs. marketing). That makes sanity checks (like employee count) meaningful.
+        -   **summary** (string): A clear human-readable summary of the runway analysis, including step-by-step arithmetic.
       `,
     });
     console.log('Raw Runway Analysis from API:', text);
-    const data = safeJSONParse(text, { projection: { months: 0, cashAtEndOfRunway: '' }, scenarios: [], optimizations: [] });
+    const data = safeJSONParse(text, {
+      grossBurn: 0,
+      netBurn: 0,
+      cashOnHand: 0,
+      monthlyRevenue: 0,
+      monthlyExpenses: 0,
+      runwayMonths: 0,
+      runwayCalculation: '',
+      scenarios: [],
+      sanityChecks: [],
+      summary: ''
+    });
     return validateRunwayAnalysisData(data);
   } catch (error) {
     console.error('Error generating runway analysis:', error);
@@ -1300,18 +1343,17 @@ export async function generateRunwayAnalysis(startupIdea: string, startupName: s
 
 const validateRunwayAnalysisData = (data: any): RunwayAnalysisData => {
   // Basic validation for required fields
-  if (!data.projection || typeof data.projection.months !== 'number' || typeof data.projection.cashAtEndOfRunway !== 'string') {
-    console.warn('RunwayAnalysisData: Invalid projection, using fallback.');
-    data.projection = { months: 0, cashAtEndOfRunway: "$0" };
-  }
-  if (!Array.isArray(data.scenarios)) {
-    console.warn('RunwayAnalysisData: Invalid scenarios array, using fallback.');
-    data.scenarios = [];
-  }
-  if (!Array.isArray(data.optimizations)) {
-    console.warn('RunwayAnalysisData: Invalid optimizations array, using fallback.');
-    data.optimizations = [];
-  }
+  if (typeof data.grossBurn !== 'number') data.grossBurn = 0;
+  if (typeof data.netBurn !== 'number') data.netBurn = 0;
+  if (typeof data.cashOnHand !== 'number') data.cashOnHand = 0;
+  if (typeof data.monthlyRevenue !== 'number') data.monthlyRevenue = 0;
+  if (typeof data.monthlyExpenses !== 'number') data.monthlyExpenses = 0;
+  if (typeof data.runwayMonths !== 'number') data.runwayMonths = 0;
+  if (typeof data.runwayCalculation !== 'string') data.runwayCalculation = '';
+  if (!Array.isArray(data.scenarios)) data.scenarios = [];
+  if (!Array.isArray(data.sanityChecks)) data.sanityChecks = [];
+  if (typeof data.summary !== 'string') data.summary = '';
+
   return data as RunwayAnalysisData;
 };
 
@@ -1328,21 +1370,46 @@ export async function generateGrowthOpportunity(startupIdea: string, startupName
         4.  **Structure Output**: Compile your findings into a valid JSON object. Do not include any text outside the JSON object.
         
         The JSON object should follow this structure:
-        -   **marketSegments**: An array of potential new market segments.
-            -   **name** (string): The name of the segment.
-            -   **description** (string): A description of the opportunity in this segment.
-            -   **opportunityScore** (number): A score from 1 to 10 indicating the potential of this segment.
-        -   **upsellCrossSell**: An array of strings with actionable ideas for upselling or cross-selling to existing customers.
-        -   **expansionStrategies**: An array of strings detailing high-level strategies for business expansion.
-        -   **benchmarking**: An array of objects comparing the startup to industry benchmarks.
-            -   **metric** (string): The metric being compared (e.g., "Churn Rate").
-            -   **yourValue** (string): The estimated value for ${startupName}.
-            -   **industryAverage** (string): The average for the industry.
-            -   **topCompetitor** (string): The value for a top competitor, if available.
+        -   **productMarketUserDataSummary** (string): A summary of the current product, market, and user data provided.
+        -   **normalizedInputs** (object): Details on how inputs were normalized (currency, time units).
+            -   **currency** (string): The normalized currency (e.g., "USD").
+            -   **timeUnit** (string): The normalized time unit (e.g., "monthly").
+        -   **growthMetrics** (object):
+            -   **customerAcquisitionCost** (number): Estimated cost to acquire a new customer.
+            -   **customerLifetimeValue** (number): Estimated lifetime value of a customer.
+            -   **churnRate** (number): Estimated monthly churn rate (percentage).
+            -   **conversionRate** (number): Estimated conversion rate (percentage).
+        -   **growthProjections** (object):
+            -   **monthlyActiveUsers** (number): Projected monthly active users.
+            -   **monthlyRecurringRevenue** (number): Projected monthly recurring revenue.
+            -   **averageRevenuePerUser** (number): Projected average revenue per user.
+        -   **scenarios** (array): An array of objects, each describing a potential growth scenario.
+            -   **name** (string): Name of the scenario (e.g., "Aggressive Marketing", "Product Expansion").
+            -   **description** (string): Detailed description of the scenario and its impact, including step-by-step arithmetic.
+            -   **projectedGrowth** (string): Quantified impact on key metrics (e.g., "+20% MAU", "+15% MRR").
+        -   **sanityChecks** (array): An array of strings, each describing a sanity check performed and any warnings.
+        -   **summary** (string): A clear human-readable summary of the growth analysis, including step-by-step arithmetic.
       `,
     });
     console.log('Raw Growth Opportunity from API:', text);
-    const data = safeJSONParse(text, { marketSegments: [], upsellCrossSell: [], expansionStrategies: [], benchmarking: [] });
+    const data = safeJSONParse(text, {
+      productMarketUserDataSummary: '',
+      normalizedInputs: { currency: '', timeUnit: '' },
+      growthMetrics: {
+        customerAcquisitionCost: 0,
+        customerLifetimeValue: 0,
+        churnRate: 0,
+        conversionRate: 0,
+      },
+      growthProjections: {
+        monthlyActiveUsers: 0,
+        monthlyRecurringRevenue: 0,
+        averageRevenuePerUser: 0,
+      },
+      scenarios: [],
+      sanityChecks: [],
+      summary: '',
+    });
     return validateGrowthOpportunityData(data);
   } catch (error) {
     console.error('Error generating growth opportunity:', error);
@@ -1351,30 +1418,23 @@ export async function generateGrowthOpportunity(startupIdea: string, startupName
 }
 
 const validateGrowthOpportunityData = (data: any): GrowthOpportunityData => {
-  if (!Array.isArray(data.marketSegments)) {
-    console.warn('GrowthOpportunityData: Invalid marketSegments array, using fallback.');
-    data.marketSegments = [];
-  } else {
-    // Ensure opportunity scores are within 1-10 range
-    data.marketSegments = data.marketSegments.map((segment: { name: string; description: string; opportunityScore: number }) => ({
-      ...segment,
-      opportunityScore: segment.opportunityScore > 10 ? 
-        Math.round(segment.opportunityScore / 10) : // Convert from 100-scale if needed
-        Math.min(Math.max(Math.round(segment.opportunityScore), 1), 10) // Ensure between 1-10
-    }));
-  }
-  if (!Array.isArray(data.upsellCrossSell)) {
-    console.warn('GrowthOpportunityData: Invalid upsellCrossSell array, using fallback.');
-    data.upsellCrossSell = [];
-  }
-  if (!Array.isArray(data.expansionStrategies)) {
-    console.warn('GrowthOpportunityData: Invalid expansionStrategies array, using fallback.');
-    data.expansionStrategies = [];
-  }
-  if (!Array.isArray(data.benchmarking)) {
-    console.warn('GrowthOpportunityData: Invalid benchmarking array, using fallback.');
-    data.benchmarking = [];
-  }
+  if (typeof data.productMarketUserDataSummary !== 'string') data.productMarketUserDataSummary = '';
+  if (typeof data.normalizedInputs !== 'object') data.normalizedInputs = { currency: '', timeUnit: '' };
+  if (typeof data.growthMetrics !== 'object') data.growthMetrics = {
+    customerAcquisitionCost: 0,
+    customerLifetimeValue: 0,
+    churnRate: 0,
+    conversionRate: 0,
+  };
+  if (typeof data.growthProjections !== 'object') data.growthProjections = {
+    monthlyActiveUsers: 0,
+    monthlyRecurringRevenue: 0,
+    averageRevenuePerUser: 0,
+  };
+  if (!Array.isArray(data.scenarios)) data.scenarios = [];
+  if (!Array.isArray(data.sanityChecks)) data.sanityChecks = [];
+  if (typeof data.summary !== 'string') data.summary = '';
+
   return data as GrowthOpportunityData;
 };
 
@@ -1781,6 +1841,7 @@ Ensure that:
       interface Wireframe {
         name?: string;
         description?: string;
+        htmlCssCode?: string;
       }
 
       // Ensure each wireframe has the required properties
@@ -2395,7 +2456,7 @@ Ensure that:
       }
       
       // Ensure each code snippet has the required properties
-      const validatedCodeSnippets = parsedData.codeSnippets.map(snippet => ({
+      const validatedCodeSnippets = parsedData.codeSnippets.map((snippet: CodeSnippet) => ({
         language: snippet.language || 'javascript',
         description: snippet.description || 'Code snippet',
         code: snippet.code || '// No code provided'
@@ -2625,7 +2686,7 @@ Ensure that:
       }
       
       // Ensure each phase has the required properties
-      const validatedPhases = parsedData.roadmapPhases.map(phase => ({
+      const validatedPhases = parsedData.roadmapPhases.map((phase: RoadmapPhase) => ({
         phaseName: phase.phaseName || 'Unnamed Phase',
         timeline: phase.timeline || 'No timeline specified',
         keyActivities: Array.isArray(phase.keyActivities) ? phase.keyActivities : ['No activities specified'],
@@ -2933,7 +2994,7 @@ Ensure that:
       }
       
       // Ensure each compliance issue has the required properties
-      const validatedComplianceIssues = parsedData.complianceIssues.map(issue => ({
+      const validatedComplianceIssues = parsedData.complianceIssues.map((issue: ComplianceIssue) => ({
         regulation: issue.regulation || 'Unnamed Regulation',
         description: issue.description || 'No description provided',
         severity: issue.severity || 'Medium',
@@ -2941,7 +3002,7 @@ Ensure that:
       }));
       
       // Ensure each risk factor has the required properties
-      const validatedRiskFactors = parsedData.riskFactors.map(factor => ({
+      const validatedRiskFactors = parsedData.riskFactors.map((factor: RiskFactor) => ({
         risk: factor.risk || 'Unnamed Risk',
         description: factor.description || 'No description provided',
         impact: factor.impact || 'Financial',

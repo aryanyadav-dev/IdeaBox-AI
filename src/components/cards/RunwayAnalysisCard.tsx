@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -17,24 +18,28 @@ interface RunwayAnalysisCardProps {
 
 const RunwayAnalysisCard: React.FC<RunwayAnalysisCardProps> = ({ startupId, startupName, startupIdea }) => {
   const { agentStatus, agentData, agentErrors, triggerRunwayAgent } = useAgentContext();
-  const [burnRate, setBurnRate] = useState('');
+  const [grossBurn, setGrossBurn] = useState('');
+  const [netBurn, setNetBurn] = useState('');
   const [cashOnHand, setCashOnHand] = useState('');
-  const [revenue, setRevenue] = useState('');
-  const [expenses, setExpenses] = useState('');
+  const [monthlyRevenue, setMonthlyRevenue] = useState('');
+  const [monthlyExpenses, setMonthlyExpenses] = useState('');
 
   const runwayData = agentData.runway as RunwayAnalysisData | null;
   const status = agentStatus.runway;
+
+  useEffect(() => {
+    if (runwayData) {
+      setGrossBurn(runwayData.grossBurn?.toString() || '');
+      setNetBurn(runwayData.netBurn?.toString() || '');
+      setCashOnHand(runwayData.cashOnHand?.toString() || '');
+      setMonthlyRevenue(runwayData.monthlyRevenue?.toString() || '');
+      setMonthlyExpenses(runwayData.monthlyExpenses?.toString() || '');
+    }
+  }, [runwayData]);
   const error = agentErrors.runway;
 
   const handleRunAnalysis = async () => {
-    // In a real application, you'd want to validate these inputs
-    const financials = {
-      burnRate: parseFloat(burnRate) || 0,
-      cashOnHand: parseFloat(cashOnHand) || 0,
-      revenue: parseFloat(revenue) || 0,
-      expenses: parseFloat(expenses) || 0,
-    };
-    await triggerRunwayAgent(startupId, startupIdea, financials);
+    await triggerRunwayAgent(startupId, startupIdea, startupName);
   };
 
   return (
@@ -53,13 +58,24 @@ const RunwayAnalysisCard: React.FC<RunwayAnalysisCardProps> = ({ startupId, star
       <CardContent className="flex-grow overflow-y-auto pt-4">
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div>
-            <Label htmlFor="burnRate" className="text-sm">Monthly Burn Rate ($)</Label>
+            <Label htmlFor="grossBurn" className="text-sm">Gross Burn ($)</Label>
             <Input
-              id="burnRate"
+              id="grossBurn"
               type="number"
-              value={burnRate}
-              onChange={(e) => setBurnRate(e.target.value)}
+              value={grossBurn}
+              onChange={(e) => setGrossBurn(e.target.value)}
               placeholder="50000"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="netBurn" className="text-sm">Net Burn ($)</Label>
+            <Input
+              id="netBurn"
+              type="number"
+              value={netBurn}
+              onChange={(e) => setNetBurn(e.target.value)}
+              placeholder="30000"
               className="mt-1"
             />
           </div>
@@ -75,23 +91,23 @@ const RunwayAnalysisCard: React.FC<RunwayAnalysisCardProps> = ({ startupId, star
             />
           </div>
           <div>
-            <Label htmlFor="revenue" className="text-sm">Monthly Revenue ($)</Label>
+            <Label htmlFor="monthlyRevenue" className="text-sm">Monthly Revenue ($)</Label>
             <Input
-              id="revenue"
+              id="monthlyRevenue"
               type="number"
-              value={revenue}
-              onChange={(e) => setRevenue(e.target.value)}
+              value={monthlyRevenue}
+              onChange={(e) => setMonthlyRevenue(e.target.value)}
               placeholder="20000"
               className="mt-1"
             />
           </div>
           <div>
-            <Label htmlFor="expenses" className="text-sm">Monthly Expenses ($)</Label>
+            <Label htmlFor="monthlyExpenses" className="text-sm">Monthly Expenses ($)</Label>
             <Input
-              id="expenses"
+              id="monthlyExpenses"
               type="number"
-              value={expenses}
-              onChange={(e) => setExpenses(e.target.value)}
+              value={monthlyExpenses}
+              onChange={(e) => setMonthlyExpenses(e.target.value)}
               placeholder="70000"
               className="mt-1"
             />
@@ -123,25 +139,33 @@ const RunwayAnalysisCard: React.FC<RunwayAnalysisCardProps> = ({ startupId, star
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4 text-gray-700"
           >
-            <h3 className="text-md font-semibold text-gray-900">Runway Projection:</h3>
-            <p>Your projected runway is <span className="font-bold text-green-600">{runwayData.projection.months} months</span>, with an estimated cash balance of <span className="font-bold text-green-600">{runwayData.projection.cashAtEndOfRunway}</span> at the end of this period.</p>
+            <h3 className="text-md font-semibold text-gray-900">Summary:</h3>
+            <p className="text-sm whitespace-pre-wrap">{runwayData.summary}</p>
 
-            <h3 className="text-md font-semibold text-gray-900">What-If Scenarios:</h3>
+            <h3 className="text-md font-semibold text-gray-900">Runway Calculation:</h3>
+            <p className="text-sm whitespace-pre-wrap">{runwayData.runwayCalculation}</p>
+
+            <h3 className="text-md font-semibold text-gray-900">Scenarios:</h3>
             <ul className="list-disc pl-5 space-y-2">
               {runwayData.scenarios.map((scenario, index) => (
                 <li key={index}>
-                  <p className="font-medium">{scenario.name}:</p>
-                  <p className="text-sm">{scenario.description} <span className="font-semibold text-blue-600">{scenario.impact}</span></p>
+                  <p className="font-medium">{scenario.name}</p>
+                  <p className="text-sm whitespace-pre-wrap">{scenario.description}</p>
+                  <p className="text-sm font-medium">Impact: {scenario.impact}</p>
                 </li>
               ))}
             </ul>
 
-            <h3 className="text-md font-semibold text-gray-900">Cost Optimization Suggestions:</h3>
-            <ul className="list-disc pl-5 space-y-2">
-              {runwayData.optimizations.map((opt, index) => (
-                <li key={index}>{opt}</li>
-              ))}
-            </ul>
+            {runwayData.sanityChecks && runwayData.sanityChecks.length > 0 && (
+              <>
+                <h3 className="text-md font-semibold text-gray-900">Sanity Checks:</h3>
+                <ul className="list-disc pl-5 space-y-1 text-sm">
+                  {runwayData.sanityChecks.map((check, index) => (
+                    <li key={index}>{check}</li>
+                  ))}
+                </ul>
+              </>
+            )}
           </motion.div>
         )}
 
@@ -155,4 +179,4 @@ const RunwayAnalysisCard: React.FC<RunwayAnalysisCardProps> = ({ startupId, star
   );
 };
 
-export default RunwayAnalysisCard; 
+export default RunwayAnalysisCard;
